@@ -1,6 +1,23 @@
 import React, { useState } from "react";
 export default function Login({ setIslogin }) {
   const [see, setSee] = useState(false);
+  const handleLogin=async(e)=>{
+    e.preventDefault();
+    try{
+      const res = await fetch("http://localhost:5000/api/auth/login",{
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+        },
+        body:JSON.stringify({email,password}),
+        credentials:"include",
+      });
+      const data = await res.json();
+      console.log("DataLogin",data);
+    }catch(err){
+      console.log(err);
+    }
+  }
   return (
     <div className="accountform">
       <h1 className="teco">Login to CabMate</h1>
@@ -29,7 +46,7 @@ export default function Login({ setIslogin }) {
           </button>
         )}
       </div>
-      <button className="btnform" type="submit">
+      <button className="btnform" type="submit" onClick={handleLogin}>
         Login
       </button>
       <p style={{ color: "purple" }}>
