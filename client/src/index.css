@@ -151,3 +151,20 @@ input:focus {
   padding: 1rem;
   font-size: medium;
 }
+.rides{
+  color: purple;
+  display:flex;
+  gap:1rem;
+  flex-wrap:wrap;
+}
+.searchText{
+  font-size: 2rem;
+}
+.searchBar{
+  flex:1;
+  min-width:200px;
+  font-size: 1rem;
+}
+.ridesavail{
+  border: 2px slid purple;
+}

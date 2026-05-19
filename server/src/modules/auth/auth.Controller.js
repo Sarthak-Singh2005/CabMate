@@ -5,7 +5,7 @@ const jwt = require("jsonwebtoken");
 async function loginUserController(req,res) {
     try{
         const{email,password}=req.body;
-        if(!email,!password){
+        if(!email||!password){
             return res.status(400).json({
                 message:"Please provide email and password",
             });
@@ -29,7 +29,7 @@ async function loginUserController(req,res) {
         );
         res.cookie("token",token,{httpOnly: true});
         res.status(200).json({
-            message: "Login Successfuly",
+            message: "Login Successfully",
         });
     }catch(err){
         return res.status(500).json({
@@ -47,7 +47,7 @@ async function registerUserController(req,res){
         }
         const isUserAlreadyExists = await userModel.findOne({email});
         if(isUserAlreadyExists){
-            return res.status.json({
+            return res.status(400).json({
                 message: "Account already exist",
             });
         }

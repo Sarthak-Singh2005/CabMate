@@ -3,16 +3,16 @@ const userModel = new mongoose.Schema(
   {
     email: {
       type: String,
-      require: true,
+      required: true,
       unique: [true, "Already Exist with this Email Account"],
     },
     password: {
       type: String,
-      require: true,
+      required: true,
     },
     name:{
       type:String,
-      require:true,
+      required:true,
     },
   },
   { timestamps: true },
