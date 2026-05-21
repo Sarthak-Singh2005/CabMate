@@ -17,7 +17,12 @@ export default function Sign({ setIslogin }) {
       });
       const data = await res.json();
       console.log("register data",data);
-      alert("Registration Successful");
+      if(res.ok){
+        alert("Registration Successful");
+      }else{
+        alert(data.message);
+      }
+      
     }catch(err){
       console.log(err);
     }
@@ -27,21 +32,22 @@ export default function Sign({ setIslogin }) {
     <div className="accountform">
       
       <h1 className="teco">Create Account</h1>
-      <p style={{ color: "purple" }}>Join CabMate</p>
-      <label htmlFor="name" className="teco">
+      <p style={{color:"#b181ff"}}>Join CabMate</p>
+      <label htmlFor="name" className="teco1">
         Full Name
       </label>
-      <input type="text" id="name" onChange={(e)=>setName(e.target.value)} placeholder="Enter Your Name" />
-      <label htmlFor="email" className="teco">
+      <input className="teco1input" type="text" id="name" onChange={(e)=>setName(e.target.value)} placeholder="Enter Your Name" />
+      <label htmlFor="email" className="teco1">
         Email
       </label>
-      <input type="email" id="email" placeholder="Enter Your Email" onChange={(e)=> setEmail(e.target.value)}/>
+      <input className="teco1input" type="email" id="email" placeholder="Enter Your Email" onChange={(e)=> setEmail(e.target.value)}/>
 
-      <label htmlFor="password"  className="teco">
+      <label htmlFor="password"  className="teco1">
         Password
       </label>
       <div className="passwordBox">
         <input
+          className="teco1input"
           onChange={(e)=>setPassword(e.target.value)}
           type={see ? "text" : "password"}
           id="password"
@@ -60,7 +66,7 @@ export default function Sign({ setIslogin }) {
       <button className="btnform" type="submit">
         Sign Up
       </button>
-      <p style={{ color: "purple" }}>
+      <p style={{ color: "#b181ff" }}>
         Already have an account?{" "}
         <span
           onClick={() => setIslogin(true)}

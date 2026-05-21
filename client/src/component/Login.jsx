@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import {useNavigate} from "react-router-dom";
 export default function Login({ setIslogin }) {
   const [see, setSee] = useState(false);
+  const [error,setError] = useState("");
   const [email,setEmail] = useState("");
   const [password,setPassword] = useState("");
-  const Navigate = useNavigate();
+  const navigate = useNavigate();
   const handleLogin=async(e)=>{
     e.preventDefault();
     try{
@@ -17,8 +18,12 @@ export default function Login({ setIslogin }) {
         credentials:"include",
       });
       const data = await res.json();
-      console.log("DataLogin",data);
-      Navigate("/rides");
+      console.log("data",data);
+      if (res.ok) {
+        navigate("/rides");
+      } else {
+        alert(data.message);
+      }
     }catch(err){
       console.log(err);
     }
@@ -28,16 +33,17 @@ export default function Login({ setIslogin }) {
     <div className="accountform">
      
       <h1 className="teco">Login to CabMate</h1>
-      <p style={{ color: "purple" }}>Sign in with Email</p>
-      <label htmlFor="email" className="teco">
+      <p style={{ color:"#b181ff",fontSize:"1.4rem" }}>Sign in with Email</p>
+      <label htmlFor="email" className="teco1">
         E-mail:
-      </label>
-      <input type="email" id="email" placeholder="Enter Your Email" onChange={(e)=>setEmail(e.target.value)} />
-      <label htmlFor="password" className="teco">
+      </label>  
+      <input type="email" id="email" className="teco1input" placeholder="Enter Your Email" onChange={(e)=>setEmail(e.target.value)} />
+      <label htmlFor="password" className="teco1">
         Password
       </label>
       <div className="passwordBox">
         <input
+          className="teco1input"
           onChange={(e)=>setPassword(e.target.value)}
           type={see ? "text" : "password"}
           id="password"
@@ -57,7 +63,7 @@ export default function Login({ setIslogin }) {
       <button className="btnform" type="submit">
         Login
       </button>
-      <p style={{ color: "purple" }}>
+      <p style={{color:"#b181ff" }}>
         Don't have an account?{" "}
         <span
           onClick={() => setIslogin(false)}

@@ -5,21 +5,25 @@ const jwt = require("jsonwebtoken");
 async function loginUserController(req,res) {
     try{
         const{email,password}=req.body;
-        if(!email||!password){
+        if(!email){
             return res.status(400).json({
-                message:"Please provide email and password",
+                message:"Please provide email",
+            });
+        }else if(!password){
+            return res.status(400).json({
+                message:"Please provide password",
             });
         }
         const user = await userModel.findOne({email});
         if(!user){
             return res.status(400).json({
-                message: "email or password not found",
+                message: "Wrong email or password",
             })
         }
         const isMatch = await bcrypt.compare(password,user.password);
         if(!isMatch){
             return res.status(400).json({
-                message:"email or password not found",
+                message:"Wrong email or password",
             })
         }
         const token = jwt.sign(
@@ -40,9 +44,17 @@ async function loginUserController(req,res) {
 async function registerUserController(req,res){
     try{
         const {email,password,name}=req.body;
-        if(!email||!password||!name){
+        if(!email){
             return res.status(400).json({
-                message:" Please provide name or email or password",
+                message:"Please provide email",
+            })
+        }else if(!password){
+            return res.status(400).json({
+                message:"Please provide password",
+            })
+        }else if(!name){
+            return res.status(400).json({
+                message:"Please provide name",
             })
         }
         const isUserAlreadyExists = await userModel.findOne({email});

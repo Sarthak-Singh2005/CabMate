@@ -1,14 +1,14 @@
 import React from "react";
-export default function   Info() {
+export default function Info() {
   return (
     <div className="infobox">
-      <h1>
-        <div style={{ color: "purple", fontSize: "70px" }}>Ride Together</div>
-        <div style={{ color: "white", fontSize: "70px" }}>Save Together</div>
-      </h1>
+      <div className="hero-headline">
+        <span className="hero-accent">Ride Together</span>
+        <span className="hero-text">Save Together</span>
+      </div>
       <p className="description">
-        Find and share cab rides easily. CabMate helps discovering available
-        shared rides in one place, making travel more affordable.
+        Find and share cab rides easily. CabMate helps discover shared rides in
+        one place, making travel more affordable and convenient for every trip.
       </p>
       <button className="explore">Explore Rides</button>
     </div>
