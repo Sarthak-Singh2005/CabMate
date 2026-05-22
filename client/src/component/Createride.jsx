@@ -1,18 +1,23 @@
 import React from "react";
 import { useState } from "react";
 import "../index.css";
+import { useNavigate } from "react-router-dom";
 export default function Createride() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [time, setTime] = useState("");
+  const [date, setDate] = useState("");
   const [phoneno, setPhoneno] = useState("");
   const [message, setMessage] = useState("");
   const [vehiclename, setVehiclename] = useState("");
   const [vacantseat, setVacantseat] = useState("");
+  const [cost, setCost] = useState("");
+  const navigate = useNavigate();
   const handlecreateride = async (e) => {
     e.preventDefault();
     try {
       const res = await fetch("http://localhost:5000/api/rides/createride", {
+        
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -21,6 +26,8 @@ export default function Createride() {
           from,
           to,
           time,
+          date,
+          cost,
           phoneno,
           message,
           vehiclename,
@@ -29,6 +36,13 @@ export default function Createride() {
         credentials: "include",
       });
       const data = await res.json();
+      console.log(data);
+      if(res.ok){
+        alert(data.message);
+        navigate("/rides");
+      }else{
+        alert(data.message);
+      }
     } catch (err) {
       console.log(err);
     }
@@ -64,6 +78,7 @@ export default function Createride() {
             <label htmlFor="name">Departure Time<span style={{color:"red"}}>*</span></label>
             <input
               id="time"
+              type="time"
               placeholder="Select departure time"
               onChange={(e) => setTime(e.target.value)}
             />
@@ -79,20 +94,38 @@ export default function Createride() {
             />
           </div>
           <div className="form-field">
+            <label htmlFor="name">Date<span style={{color:"red"}}>*</span></label>
+            <input
+              id="date"
+              type="date"
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </div>
+          <div className="form-field">
+            <label htmlFor="name">Cost(₹)<span style={{color:"red"}}>*</span></label>
+            <input
+              placeholder="Appoximate Cost per person"
+              type="number"
+              min="0"
+              id="cost"
+              onChange={(e) => setCost(e.target.value)}
+            />
+          </div>
+          <div className="form-field">
+            <label htmlFor="vehiclename">Vehicle name<span style={{color:"red"}}>*</span></label>
+            <input
+              id="vehiclename"
+              placeholder="eg Maruti Suzuki Wagon R,Innova,etc"
+              onChange={(e) => setVehiclename(e.target.value)}
+            />
+          </div>
+          <div className="form-field">
             <label htmlFor="phoneno">Contact Number</label>
             <input
               id="phoneno"
               type="tel"
               placeholder="Enter contact number"
               onChange={(e) => setPhoneno(e.target.value)}
-            />
-          </div>
-          <div className="form-field">
-            <label htmlFor="vehiclename">Vehicle name</label>
-            <input
-              id="vehiclename"
-              placeholder="Cab model"
-              onChange={(e) => setVehiclename(e.target.value)}
             />
           </div>
           <div className="form-field full-width">
