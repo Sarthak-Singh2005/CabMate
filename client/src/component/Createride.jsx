@@ -81,7 +81,7 @@ export default function Createride() {
               type="time"
               placeholder="Select departure time"
               onChange={(e) => setTime(e.target.value)}
-            />
+            />  
           </div>
           <div className="form-field">
             <label htmlFor="vacantseat">Available Seats<span style={{color:"red"}}>*</span></label>
