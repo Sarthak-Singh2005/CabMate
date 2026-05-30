@@ -6,6 +6,8 @@ const rideRoutes = require("./modules/rides/ride.routes");
 const createRideRoutes = require("./modules/createRide/createRide.routes");
 const availRoutes = require("./modules/availRide/avail.routes");
 const findride = require("./modules/findride/findride.routes")
+const chatRoutes =require("./modules/chat/chat.routes");
+
 const app = express();
 app.use(
   cors({
@@ -20,6 +22,7 @@ app.use("/api/rides", rideRoutes);
 app.use("/api/rides", createRideRoutes);
 app.use("/api/rides", availRoutes);
 app.use("/api/rides", findride);
+app.use("/api/chat", chatRoutes);
 app.get("/", (req, res) => {
   res.send("Server Working");
 });
