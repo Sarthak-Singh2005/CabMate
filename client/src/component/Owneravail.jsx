@@ -1,56 +1,37 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { useEffect } from "react";
+import { useState } from "react";
+import "../index.css";
 import { useNavigate } from "react-router-dom";
-export default function Ridesavail() {
-  const [allride, setAllride] = useState([]);
+export default function Owneravail() {
+  const [ownride, setOwnride] = useState([]);
   const [message, setMessage] = useState("");
-  
   const navigate = useNavigate();
-  const availride = async () => {
+  const ownerride = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/rides/avail", {
+      const res = await fetch("http://localhost:5000/api/rides/owner", {
         method: "GET",
         credentials: "include",
       });
-      const response = await res.json();
+      const data = await res.json();
+
       if (res.ok) {
-        setAllride(response);
+        setOwnride(data);
       } else {
-        setMessage(response.message);
+        setMessage(data.message);
       }
     } catch (err) {
       console.log(err);
     }
   };
   useEffect(() => {
-    availride();
+    ownerride();
   }, []);
-
-  const chatbutton = async (rideId) => {
-    try {
-      const res = await fetch("http://localhost:5000/api/chat/conversation", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          rideId,
-        }),
-        credentials: "include",
-      });
-      const data = await res.json();
-      console.log(data);
-      navigate(`/chat/${data.conversation._id}`);
-    } catch (err) {
-      console.log(err);
-    }
-  };
-
   return (
     <div>
-      <h1 className="section-heading1">Available Rides</h1>
       {message && <h2 className="empty-message">{message}</h2>}
 
-      {allride.map((user) => (
+      {ownride.map((user) => (
         <div className="avail-ride-card" key={user._id}>
           <div className="avail-ride-card1">
             <h1>From: {user.from}</h1>
@@ -79,8 +60,11 @@ export default function Ridesavail() {
             )}
           </div>
 
-          <button className="book-button" onClick={() => chatbutton(user._id)}>
-            Chat
+          <button
+            className="book-button"
+            onClick={() => navigate(`/ownerchats/${user._id}`)}
+          >
+            View Chats
           </button>
         </div>
       ))}

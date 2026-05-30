@@ -1,6 +1,12 @@
 const mongoose = require("mongoose");
 
 const createrideModel = new mongoose.Schema({
+  createdBy:{
+   type:mongoose.Schema.Types.ObjectId,
+   ref:"User",
+   required:true,
+},
+
   from: {
     type: String,
     required: true,

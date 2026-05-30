@@ -8,6 +8,7 @@ async function createnewride(req, res) {
       });  
     }
     const ridecreate = await createrideModel.create({
+      createdBy:req.user.id,
       to,
       date,
       cost,
