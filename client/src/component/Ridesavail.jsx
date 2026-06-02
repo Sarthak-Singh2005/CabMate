@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import Bookride from "./Bookride";
 export default function Ridesavail() {
   const [allride, setAllride] = useState([]);
-  const [message, setMessage] = useState("");
-  
+  const [message1, setMessage] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
+  const [selectedRide, setSelectedRide] = useState(null);
   const navigate = useNavigate();
   const availride = async () => {
     try {
@@ -11,11 +14,13 @@ export default function Ridesavail() {
         method: "GET",
         credentials: "include",
       });
-      const response = await res.json();
-      if (res.ok) {
-        setAllride(response);
-      } else {
-        setMessage(response.message);
+
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setAllride(data); 
+      } else if (data.message) {
+        setMessage(data.message); 
+        setAllride([]); 
       }
     } catch (err) {
       console.log(err);
@@ -44,12 +49,46 @@ export default function Ridesavail() {
       console.log(err);
     }
   };
+  const openBookingPopup = (rideId) => {
+    setSelectedRide(rideId);
+    setShowPopup(true);
+  };
+
+  const closeBookingPopup = () => {
+    setShowPopup(false);
+    setSelectedRide(null);
+  };
+
+  const requestBooking = async () => {
+    // if (selectedRide) {
+      try {
+        const res = await fetch(
+          "http://localhost:5000/api/rides/bookingconfirm",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              bookingreq: true,
+            }),
+            credentials: "include",
+          },
+        );
+        const data = await res.json();
+        console.log("79",data);
+        closeBookingPopup();
+        // navigate(`/chat/${data.conversation._id}`);
+      } catch (err) {
+        console.log(err);
+      }
+    // }
+  };
 
   return (
     <div>
       <h1 className="section-heading1">Available Rides</h1>
-      {message && <h2 className="empty-message">{message}</h2>}
-
+      {message1 && <h2 className="empty-message">{message1}</h2>}
       {allride.map((user) => (
         <div className="avail-ride-card" key={user._id}>
           <div className="avail-ride-card1">
@@ -79,11 +118,40 @@ export default function Ridesavail() {
             )}
           </div>
 
+          <button
+            className="book-button"
+            onClick={() => openBookingPopup(user._id)}
+          >
+            Book
+          </button>
           <button className="book-button" onClick={() => chatbutton(user._id)}>
             Chat
           </button>
         </div>
       ))}
+
+      {showPopup && (
+        <div className="popup">
+          <div className="popup-container">
+            <h2>Confirm Booking</h2>
+            <p>Are you sure you want to book this ride?</p>
+            <div className="popup-buttons">
+              <button
+                className="popup-btn cancel-btn"
+                onClick={closeBookingPopup}
+              >
+                Cancel
+              </button>
+              <button
+                className="popup-btn confirm-btn"
+                onClick={requestBooking}
+              >
+                Book Ride
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
