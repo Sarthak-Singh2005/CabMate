@@ -15,10 +15,11 @@ export default function Owneravail() {
       });
       const data = await res.json();
 
-      if (res.ok) {
-        setOwnride(data);
-      } else {
-        setMessage(data.message);
+      if (Array.isArray(data)) {
+        setOwnride(data); 
+      } else if (data.message) {
+        setMessage(data.message); 
+        setOwnride([]);
       }
     } catch (err) {
       console.log(err);
