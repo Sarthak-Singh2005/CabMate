@@ -492,6 +492,7 @@ body {
   padding: 0;
 }
 .book-button {
+  margin: 5px;
   grid-column: 1 / -1;
   padding: 1rem 1.4rem;
   border: none;
@@ -513,6 +514,70 @@ body {
 .book-button:active {
   transform: translateY(0);
 }
+
+@media (max-width: 768px) {
+  .avail-ride-card {
+    width: calc(100% - 2rem);
+    max-width: none;
+    margin: 1rem auto;
+    padding: 1rem;
+  }
+
+  .avail-ride-card div {
+    display: grid;
+    gap: 0.85rem;
+    color: #c1a9ff;
+  }
+
+  .avail-ride-card1,
+  .avail-ride-card2 {
+    grid-template-columns: 1fr;
+  }
+
+  .avail-ride-card1 {
+    gap: 0.9rem;
+  }
+
+  .avail-ride-card2 {
+    gap: 0.9rem;
+  }
+
+  .avail-ride-card h1 {
+    font-size: 0.95rem;
+    line-height: 1.3;
+  }
+
+  .book-button {
+    width: 100%;
+    max-width: 100%;
+    margin: 0.5rem 0;
+    padding: 0.9rem 1rem;
+  }
+
+  .modal-container {
+    width: min(92vw, 400px);
+    margin: 1rem;
+    padding: 1.6rem 1.4rem;
+  }
+
+  .modal-container h2 {
+    font-size: 1.6rem;
+  }
+
+  .modal-container p {
+    font-size: 1rem;
+  }
+
+  .modal-buttons {
+    flex-direction: column;
+    gap: 0.9rem;
+  }
+
+  .modal-btn {
+    width: 100%;
+  }
+}
+
 .noride {
   color: #c1a9ff;
   text-align: center;
@@ -655,7 +720,7 @@ body {
   font-size: 22px;
   font-weight: 600;
 }
-.OwnMessHead{
+.OwnMessHead {
   color: #7c5cff;
 }
 .my-message {
@@ -731,7 +796,7 @@ body {
   font-weight: bold;
 }
 
-.chat-info h3 {
+.chat-info h2 {
   margin: 0;
   color: white;
 }
@@ -740,4 +805,164 @@ body {
   margin-top: 5px;
   color: #aaa;
   font-size: 14px;
+}
+
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.popup-container {
+  background: linear-gradient(
+    135deg,
+    rgba(139, 85, 255, 0.15),
+    rgba(74, 49, 255, 0.15)
+  );
+  border: 1px solid rgba(139, 85, 255, 0.5);
+  border-radius: 20px;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  min-width: 300px;
+  max-width: 400px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  animation: modalSlide 0.3s ease;
+}
+
+@keyframes modalSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.popup-container h2 {
+  margin: 0 0 1rem 0;
+  font-size: 1.8rem;
+  color: #c1a9ff;
+  letter-spacing: 0.05em;
+}
+
+.popup-container p {
+  margin: 0 0 2rem 0;
+  font-size: 1.1rem;
+  color: #e0d5ff;
+  line-height: 1.5;
+}
+
+.popup-buttons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+.popup-btn {
+  padding: 0.8rem 1.8rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.cancel-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e0d5ff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.confirm-btn {
+  background: linear-gradient(135deg, #8b55ff, #4a31ff);
+  color: white;
+}
+
+.confirm-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 15px 40px rgba(138, 73, 255, 0.4);
+}
+
+.confirm-btn:active {
+  transform: translateY(0);
+}
+.acceptbtn {
+  margin-left: auto;
+  /* display: flex;
+  flex-direction: row; */
+  left: 0%;
+}
+.acceptbtn h2 {
+  color: white;
+  margin: 0;
+}
+@media (max-width: 768px) {
+  .owner-chat-page {
+    width: min(100%, 96vw);
+    margin: 20px auto;
+    padding: 0 10px;
+  }
+
+  .chat-user-card {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+    gap: 16px;
+    cursor: default;
+  }
+
+  .chat-user-card:hover {
+    transform: none;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .avatar {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto;
+  }
+
+  .chat-info,
+  .acceptbtn {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    width: 100%;
+  }
+
+  .chat-info h2,
+  .acceptbtn h2 {
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  .createbutton {
+    width: auto;
+    max-width: 100%;
+    padding: 0.95rem 1.1rem;
+    align-self: center;
+  }
+
+  .acceptbtn {
+    margin-left: 0;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
 }
