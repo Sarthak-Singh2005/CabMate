@@ -5,7 +5,9 @@ import Bookride from "./Bookride";
 export default function Ridesavail() {
   const [allride, setAllride] = useState([]);
   const [message1, setMessage] = useState("");
+  const [sendreqmessage, setSendReqMessage] = useState("");
   const [showPopup, setShowPopup] = useState(false);
+  const [ReqConfirmPopup, setReqConfirmPopup] = useState(false);
   const [selectedRide, setSelectedRide] = useState(null);
   const navigate = useNavigate();
   const availride = async () => {
@@ -17,10 +19,10 @@ export default function Ridesavail() {
 
       const data = await res.json();
       if (Array.isArray(data)) {
-        setAllride(data); 
+        setAllride(data);
       } else if (data.message) {
-        setMessage(data.message); 
-        setAllride([]); 
+        setMessage(data.message);
+        setAllride([]);
       }
     } catch (err) {
       console.log(err);
@@ -55,12 +57,13 @@ export default function Ridesavail() {
   };
 
   const closeBookingPopup = () => {
+    setReqConfirmPopup(false);
     setShowPopup(false);
     setSelectedRide(null);
   };
 
   const requestBooking = async () => {
-    // if (selectedRide) {
+    if (selectedRide) {
       try {
         const res = await fetch(
           "http://localhost:5000/api/rides/bookingconfirm",
@@ -71,18 +74,20 @@ export default function Ridesavail() {
             },
             body: JSON.stringify({
               bookingreq: true,
+              rideId: selectedRide,
             }),
             credentials: "include",
           },
         );
         const data = await res.json();
-        console.log("79",data);
+        setSendReqMessage(data.message);
+        console.log("79", data);
         closeBookingPopup();
-        // navigate(`/chat/${data.conversation._id}`);
+        setReqConfirmPopup(true);
       } catch (err) {
         console.log(err);
       }
-    // }
+    }
   };
 
   return (
@@ -105,7 +110,6 @@ export default function Ridesavail() {
             <h1>Time: {user.time}</h1>
             <h1>Vacant Seat: {user.vacantseat}</h1>
             <h1>Vehicle Name: {user.vehiclename}</h1>
-
             {user.phoneno?.length > 0 && <h1>{user.phoneno}</h1>}
             <h1>Cost: {user.cost}</h1>
           </div>
@@ -147,6 +151,21 @@ export default function Ridesavail() {
                 onClick={requestBooking}
               >
                 Book Ride
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {ReqConfirmPopup && (
+        <div className="popup">
+          <div className="popup-container">
+            <h2>{sendreqmessage}</h2>
+            <div className="popup-buttons">
+              <button
+                className="popup-btn cancel-btn"
+                onClick={closeBookingPopup}
+              >
+                Ok
               </button>
             </div>
           </div>
