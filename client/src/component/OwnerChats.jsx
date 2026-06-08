@@ -4,12 +4,11 @@ import { useParams, useNavigate } from "react-router-dom";
 export default function OwnerChats() {
   const { rideId } = useParams();
   const [message, setMessage] = useState("");
-  const [acceptreq, setAcceptreq] = useState("");
-  const [accept,setAccept] =useState(false);
   const navigate = useNavigate();
-
   const [conversations, setConversations] = useState([]);
   const [ownerId, setOwnerId] = useState("");
+  const [pendingPassengers, setPendingPassengers] = useState([]);
+  const [bookingRequestUsers, setBookingRequestUsers] = useState([]);
 
   const fetchChats = async () => {
     try {
@@ -19,29 +18,66 @@ export default function OwnerChats() {
       });
 
       const data = await res.json();
+      console.log("conversations",data);
+      console.log("conversations1",data.conversations);
       if (res.ok) {
-        setConversations(data.conversations);
+
+        setConversations(data.conversations || []);
+        if (data.ownerId) setOwnerId(data.ownerId);
       } else {
         setMessage(data.message);
       }
-      setOwnerId(data.ownerId);
     } catch (err) {
       console.log(err);
     }
   };
-  const acceptBooking = async () => {
+
+  const fetchBookingRequests = async () => {
     try {
       const res = await fetch(
-        "http://localhost:5000/api/rides/bookingconfirm",
+        `http://localhost:5000/api/rides/bookingrequests/${rideId}`,
+        { method: "GET", credentials: "include" },
+      );
+      const data = await res.json();
+      if (res.ok && Array.isArray(data.bookingRequests)) {
+        const pending = data.bookingRequests
+          .filter((r) => r.status === "pending")
+          .map((r) => r.user._id);
+        setPendingPassengers(pending.map((id) => id && id.toString()));
+
+        const users = data.bookingRequests.map((r) => {
+          const user = r.user;
+          if (typeof user === "string")
+            return { _id: user, name: "Unknown User" };
+          return {
+            _id: user._id || user.id,
+            name: user.name || user.email || "Unknown User",
+          };
+        });
+        setBookingRequestUsers(users);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const acceptBooking = async (passengerId) => {
+    try {
+      const res = await fetch(
+        "http://localhost:5000/api/rides/bookingconfirm/accept",
         {
-          method: "GET",
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rideId, passengerId }),
           credentials: "include",
         },
       );
-      const acceptreq = await res.json();
-      console.log("yes", acceptreq);
-      if(acceptreq==true){
-        setAccept(true);
+      const data = await res.json();
+      if (res.ok) {
+        // remove passenger from pending list
+        setPendingPassengers((prev) => prev.filter((id) => id !== passengerId));
+      } else {
+        console.log(data.message);
       }
     } catch (err) {
       console.log(err);
@@ -49,41 +85,80 @@ export default function OwnerChats() {
   };
   useEffect(() => {
     fetchChats();
-  }, []);
+  }, [rideId]);
   useEffect(() => {
-    acceptBooking();
-  }, []);
+    fetchBookingRequests();
+  }, [rideId]);
 
   return (
     <div className="owner-chat-page">
       <h1 className="OwnMessHead">People Who Contacted You</h1>
       {message && <h2 className="OwnMessHead">{message}</h2>}
-      {conversations.map((conversation) => {
-        const passenger = conversation.participants.find(
-          (p) => p._id.toString() !== ownerId.toString(),
-        );
+      {(() => {
+        const passengerMap = new Map();
 
-        return (
-          <div
-            key={conversation._id}
-            className="chat-user-card"
-            
-          >
-            <div className="avatar">
-              {passenger?.name?.charAt(0).toUpperCase()}
-            </div>
+        conversations.forEach((conversation) => {
+          const passenger = conversation.participants.find(
+            (p) => p._id && p._id.toString() !== ownerId.toString(),
+          );
+          if (passenger) {
+            const id = passenger._id.toString(); //passenger id
+            passengerMap.set(id, {
+              _id: id,
+              name: passenger.name,
+              conversationId: conversation._id,
+            });
+          }
+        });
 
-            <div className="chat-info">
-              <h2>{passenger?.name}</h2>
-              <button className="createbutton" onClick={() => navigate(`/chat/${conversation._id}`)}>Click to open conversation</button>
+        bookingRequestUsers.forEach((u) => {
+          const id = (u._id || u).toString();
+          if (!passengerMap.has(id)) {
+            passengerMap.set(id, { _id: id, name: u.name || "Unknown User" });
+          }
+        });
+
+        const combined = Array.from(passengerMap.values());
+
+        return combined.map((passenger) => {
+          const convId = passenger.conversationId;
+          return (
+            <div key={passenger._id} className="chat-user-card">
+              <div className="avatar">
+                {passenger?.name?.charAt(0)?.toUpperCase()}
+              </div>
+
+              <div className="chat-info">
+                <h2>{passenger?.name}</h2>
+                <button
+                  className="createbutton"
+                  onClick={() => navigate(`/chat/${convId}`)}
+                >
+                  Click to open conversation
+                </button>
+              </div>
+
+              {pendingPassengers.includes(passenger._id.toString()) && (
+                <div className="acceptbtn">
+                  <h2>{passenger?.name} requested to join in cab</h2>
+                  <button
+                    className="createbutton"
+                    onClick={() => acceptBooking(passenger._id)}
+                  >
+                    Accept
+                  </button>
+                  <button
+                    className="createbutton"
+                    onClick={() => rejectBooking(passenger._id)}
+                  >
+                    Reject
+                  </button>
+                </div>
+              )}
             </div>
-            {accept&&<div className="acceptbtn">
-              <h2>{passenger?.name} requested to join in cab</h2>
-              <button className="createbutton" onClick={()=>alert("Working")}>Accept</button>
-            </div>}
-          </div>
-        );
-      })}
+          );
+        });
+      })()}
     </div>
   );
 }
