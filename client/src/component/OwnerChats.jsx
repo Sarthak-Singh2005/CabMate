@@ -83,6 +83,29 @@ export default function OwnerChats() {
       console.log(err);
     }
   };
+  const rejectBooking = async (passengerId) => {
+    try {
+      const res = await fetch(
+        "http://localhost:5000/api/rides/bookingconfirm/reject",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ rideId, passengerId }),
+          credentials: "include",
+        },
+      );
+      const data = await res.json();
+      if (res.ok) {
+        // remove passenger from pending list
+        setPendingPassengers((prev) => prev.filter((id) => id !== passengerId));
+        alert(data.message);
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
   useEffect(() => {
     fetchChats();
   }, [rideId]);
