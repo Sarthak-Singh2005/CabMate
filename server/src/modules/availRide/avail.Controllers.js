@@ -47,12 +47,10 @@ async function reqRide(req, res) {
 
     ride.bookingRequests.push({ user: req.user.id, status: "pending" });
     await ride.save();
-    return res
-      .status(200)
-      .json({
-        message:
-          "Booking request sent. You will be notified once the Owner Accept the request",
-      });
+    return res.status(200).json({
+      message:
+        "Booking request sent. You will be notified once the Owner Accept the request",
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({
@@ -91,9 +89,15 @@ async function acceptRide(req, res) {
     if (reqIndex === -1)
       return res.status(404).json({ message: "Pending request not found" });
 
+    if (ride.vacantseat <= 0) {
+      ride.bookingRequests[reqIndex].status = "accepted";
+      await ride.save();
+      return res.status(400).json({
+        message: "No seats left in the vehicle",
+      });
+    }
     ride.bookingRequests[reqIndex].status = "accepted";
-
-    if (ride.vacantseat > 0) ride.vacantseat -= 1;
+    ride.vacantseat -= 1;
     await ride.save();
     return res.status(200).json({ message: "Request accepted" });
   } catch (err) {
@@ -106,14 +110,18 @@ async function acceptRide(req, res) {
 async function rejectRide(req, res) {
   try {
     const { rideId, passengerId } = req.body;
-    if(!rideId || !passengerId){
-      return res.status(404).json({message:"rideId or passengerNot Found"});
+    if (!rideId || !passengerId) {
+      return res.status(404).json({ message: "rideId or passengerNot Found" });
     }
     const ride = await createrideModel.findById(rideId);
     if (!ride) {
-      return res.status(404).json({message:"Ride Not Found"})
+      return res.status(404).json({ message: "Ride Not Found" });
     } else {
-      const request = ride.bookingRequests.find((r) => r.user.toString() === passengerId.toString()&&r.status === "pending");
+      const request = ride.bookingRequests.find(
+        (r) =>
+          r.user.toString() === passengerId.toString() &&
+          r.status === "pending",
+      );
       if (request) {
         request.status = "rejected";
         await ride.save();
