@@ -9,8 +9,9 @@ async function availRide(req, res) {
     if (availrides.length > 0) {
       return res.status(200).json(availrides);
     } else {
-      return res.status(200).json({ 
-        message: "No rides are currently available" });
+      return res.status(200).json({
+        message: "No rides are currently available",
+      });
     }
   } catch (err) {
     return res.status(500).json({
@@ -37,15 +38,21 @@ async function ownerRide(req, res) {
 }
 async function reqRide(req, res) {
   try {
-    const bookingreq = req.body;
-    console.log(bookingreq);
-    if (bookingreq) {
-      return res.status(200).json({ acceptreq: "yes" });
-    } else {
-      return res.status(200).json({
-        acceptreq: "no",
-      });
+    const { bookingreq, rideId } = req.body;
+    if (!bookingreq || !rideId) {
+      return res.status(400).json({ message: "Missing bookingreq or rideId" });
     }
+    const ride = await createrideModel.findById(rideId);
+    if (!ride) return res.status(404).json({ message: "Ride not found" });
+
+    ride.bookingRequests.push({ user: req.user.id, status: "pending" });
+    await ride.save();
+    return res
+      .status(200)
+      .json({
+        message:
+          "Booking request sent. You will be notified once the Owner Accept the request",
+      });
   } catch (err) {
     console.error(err);
     return res.status(500).json({
@@ -53,21 +60,79 @@ async function reqRide(req, res) {
     });
   }
 }
+
+async function getBookingRequests(req, res) {
+  try {
+    const { rideId } = req.params;
+    const ride = await createrideModel
+      .findById(rideId)
+      .populate("bookingRequests.user", "name");
+    if (!ride) return res.status(404).json({ message: "Ride not found" });
+    return res.status(200).json({ bookingRequests: ride.bookingRequests });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server Error" });
+  }
+}
 async function acceptRide(req, res) {
   try {
-    const acceptreq = req.body;
-    console.log("accq31", acceptreq);
-    if (acceptreq) {
-      return res.status(200).json({ acceptreq: true });
-    } else {
-      return res.status(200).json({ acceptreq: false });
-    }
-  } catch (err) { 
+    const { rideId, passengerId } = req.body;
+    if (!rideId || !passengerId)
+      return res.status(400).json({ message: "Missing rideId or passengerId" });
+    const ride = await createrideModel.findById(rideId);
+    if (!ride) return res.status(404).json({ message: "Ride not found" });
+    if (ride.createdBy.toString() !== req.user.id.toString())
+      return res.status(403).json({ message: "Not authorized" });
+
+    const reqIndex = ride.bookingRequests.findIndex(
+      (r) =>
+        r.user.toString() === passengerId.toString() && r.status === "pending",
+    );
+    if (reqIndex === -1)
+      return res.status(404).json({ message: "Pending request not found" });
+
+    ride.bookingRequests[reqIndex].status = "accepted";
+
+    if (ride.vacantseat > 0) ride.vacantseat -= 1;
+    await ride.save();
+    return res.status(200).json({ message: "Request accepted" });
+  } catch (err) {
     console.error(err);
     return res.status(500).json({
       message: "Server Error",
     });
   }
 }
+async function rejectRide(req, res) {
+  try {
+    const { rideId, passengerId } = req.body;
+    if(!rideId || !passengerId){
+      return res.status(404).json({message:"rideId or passengerNot Found"});
+    }
+    const ride = await createrideModel.findById(rideId);
+    if (!ride) {
+      return res.status(404).json({message:"Ride Not Found"})
+    } else {
+      const request = ride.bookingRequests.find((r) => r.user.toString() === passengerId.toString()&&r.status === "pending");
+      if (request) {
+        request.status = "rejected";
+        await ride.save();
+        return res.status(200).json({ message: "Request rejected" });
+      }
+    }
+  } catch (er) {
+    return res.status(500).json({
+      message: "Server Error",
+    });
+    console.log(err);
+  }
+}
 
-module.exports = { availRide, ownerRide,reqRide,acceptRide };
+module.exports = {
+  availRide,
+  ownerRide,
+  reqRide,
+  acceptRide,
+  rejectRide,
+  getBookingRequests,
+};
