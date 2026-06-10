@@ -4,7 +4,7 @@ async function availRide(req, res) {
   try {
     const availrides = await createrideModel.find({
       createdBy: { $ne: req.user.id },
-      vacantseat:{$gt: 0},
+      vacantseat: { $gt: 0 },
     });
 
     if (availrides.length > 0) {
@@ -45,7 +45,28 @@ async function reqRide(req, res) {
     }
     const ride = await createrideModel.findById(rideId);
     if (!ride) return res.status(404).json({ message: "Ride not found" });
+    const existingRequest = ride.bookingRequests.find(
+      (r) => r.user.toString() === req.user.id.toString(),
+    );
+    if (existingRequest) {
+      if (existingRequest.status === "accepted") {
+        return res.status(400).json({
+          message: "Your request has already been accepted",
+        });
+      }
 
+      if (existingRequest.status === "pending") {
+        return res.status(400).json({
+          message: "Your request is already pending",
+        });
+      }
+
+      if (existingRequest.status === "rejected") {
+        return res.status(400).json({
+          message: "Your request was rejected",
+        });
+      }
+    }
     ride.bookingRequests.push({ user: req.user.id, status: "pending" });
     await ride.save();
     return res.status(200).json({
