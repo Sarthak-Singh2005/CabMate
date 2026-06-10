@@ -74,7 +74,6 @@ export default function OwnerChats() {
       );
       const data = await res.json();
       if (res.ok) {
-        // remove passenger from pending list
         setPendingPassengers((prev) => prev.filter((id) => id !== passengerId));
       } else {
         console.log(data.message);
