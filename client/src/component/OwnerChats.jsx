@@ -141,7 +141,9 @@ export default function OwnerChats() {
         });
 
         const combined = Array.from(passengerMap.values());
-
+        if(combined.length<0){
+          setMessage()
+        }
         return combined.map((passenger) => {
           const convId = passenger.conversationId;
           return (
