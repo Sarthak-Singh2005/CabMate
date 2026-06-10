@@ -4,6 +4,7 @@ async function availRide(req, res) {
   try {
     const availrides = await createrideModel.find({
       createdBy: { $ne: req.user.id },
+      // vacantseat:{$gt: 0},
     });
 
     if (availrides.length > 0) {
@@ -88,7 +89,6 @@ async function acceptRide(req, res) {
     );
     if (reqIndex === -1)
       return res.status(404).json({ message: "Pending request not found" });
-
     if (ride.vacantseat <= 0) {
       ride.bookingRequests[reqIndex].status = "accepted";
       await ride.save();
