@@ -4,7 +4,7 @@ async function availRide(req, res) {
   try {
     const availrides = await createrideModel.find({
       createdBy: { $ne: req.user.id },
-      // vacantseat:{$gt: 0},
+      vacantseat:{$gt: 0},
     });
 
     if (availrides.length > 0) {
