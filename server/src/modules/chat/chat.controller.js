@@ -68,7 +68,7 @@ async function getRideChats(req, res) {
     }).populate("participants", "name email");
     if (conversations.length === 0) {
       return res.status(404).json({
-        message: "No one has contacted you yet",
+        message: "No one have messaged you",
       });
     }
     return res.status(200).json({
