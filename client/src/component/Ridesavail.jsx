@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import Bookride from "./Bookride";
 export default function Ridesavail() {
   const [allride, setAllride] = useState([]);
   const [message1, setMessage] = useState("");
@@ -57,8 +56,8 @@ export default function Ridesavail() {
   };
 
   const closeBookingPopup = () => {
-    setReqConfirmPopup(false);
     setShowPopup(false);
+    setReqConfirmPopup(false);
     setSelectedRide(null);
   };
 
@@ -80,10 +79,9 @@ export default function Ridesavail() {
           },
         );
         const data = await res.json();
-        setSendReqMessage(data.message);
-        console.log("79", data);
-        closeBookingPopup();
-        setReqConfirmPopup(true);
+          setSendReqMessage(data.message);
+          closeBookingPopup();
+          setReqConfirmPopup(true);
       } catch (err) {
         console.log(err);
       }
@@ -121,7 +119,6 @@ export default function Ridesavail() {
               </div>
             )}
           </div>
-
           <button
             className="book-button"
             onClick={() => openBookingPopup(user._id)}
