@@ -11,7 +11,8 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/rides" element={<Rides />} />
-        <Route path="/createride" element={<Createride />} />
+        <Route path="/createride" element={<Createride/>} />
+        <Route path="/:id1/edit" element={<Createride/>} />
         <Route path="/chat/:id" element={<Chat1 />} />
         <Route path="/ownerchats/:rideId" element={<OwnerChats />} />
       </Routes>
