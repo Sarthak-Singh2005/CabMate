@@ -82,7 +82,7 @@ export default function Owneravail() {
             <h1>Vehicle Name: {user.vehiclename}</h1>
 
             {user.phoneno?.length > 0 && <h1>{user.phoneno}</h1>}
-            <h1>Cost: {user.cost}</h1>
+            <h1>Cost: {user.cost}</h1> 
           </div>
 
           <div className="avail-ride-card2">
@@ -101,7 +101,7 @@ export default function Owneravail() {
           </button>
           <button
             className="book-button"
-            onClick={() => navigate()}
+            onClick={() => navigate(`/${user._id}/edit`)}
           >
             Edit
           </button>
