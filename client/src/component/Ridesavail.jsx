@@ -8,6 +8,7 @@ export default function Ridesavail() {
   const [showPopup, setShowPopup] = useState(false);
   const [ReqConfirmPopup, setReqConfirmPopup] = useState(false);
   const [selectedRide, setSelectedRide] = useState(null);
+  const [isRequesting, setIsRequesting] = useState(false);
   const navigate = useNavigate();
   const availride = async () => {
     try {
@@ -62,29 +63,31 @@ export default function Ridesavail() {
   };
 
   const requestBooking = async () => {
-    if (selectedRide) {
-      try {
-        const res = await fetch(
-          "http://localhost:5000/api/rides/bookingconfirm",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              bookingreq: true,
-              rideId: selectedRide,
-            }),
-            credentials: "include",
+    if (!selectedRide || isRequesting) return;
+    setIsRequesting(true);
+    try {
+      const res = await fetch(
+        "http://localhost:5000/api/rides/bookingconfirm",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        );
-        const data = await res.json();
-          setSendReqMessage(data.message);
-          closeBookingPopup();
-          setReqConfirmPopup(true);
-      } catch (err) {
-        console.log(err);
-      }
+          body: JSON.stringify({
+            bookingreq: true,
+            rideId: selectedRide,
+          }),
+          credentials: "include",
+        },
+      );
+      const data = await res.json();
+      setSendReqMessage(data.message);
+      closeBookingPopup();
+      setReqConfirmPopup(true);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setIsRequesting(false);
     }
   };
 
@@ -146,8 +149,9 @@ export default function Ridesavail() {
               <button
                 className="popup-btn confirm-btn"
                 onClick={requestBooking}
+                disabled={isRequesting}
               >
-                Book Ride
+                {isRequesting ? "Booking..." : "Book Ride"}
               </button>
             </div>
           </div>
