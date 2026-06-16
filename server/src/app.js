@@ -6,6 +6,7 @@ const createRideRoutes = require("./modules/createRide/createRide.routes");
 const availRoutes = require("./modules/availRide/avail.routes");
 const findride = require("./modules/findride/findride.routes")
 const chatRoutes =require("./modules/chat/chat.routes");
+const editRideRoutes =require("./modules/editRide/editRide.routes");
 
 const app = express();
 app.use(
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use(cookieParser());
 app.use("/api/auth", authRoutes);
 app.use("/api/rides", createRideRoutes);
+app.use("/api/rides", editRideRoutes);
 app.use("/api/rides", availRoutes);
 app.use("/api/rides", findride);
 app.use("/api/chat", chatRoutes);
