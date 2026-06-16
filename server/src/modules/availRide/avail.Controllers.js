@@ -43,32 +43,52 @@ async function reqRide(req, res) {
     if (!bookingreq || !rideId) {
       return res.status(400).json({ message: "Missing bookingreq or rideId" });
     }
-    const ride = await createrideModel.findById(rideId);
-    if (!ride) return res.status(404).json({ message: "Ride not found" });
-    const existingRequest = ride.bookingRequests.find(
-      (r) => r.user.toString() === req.user.id.toString(),
+
+    const updatedRide = await createrideModel.findOneAndUpdate(
+      {
+        _id: rideId,
+        "bookingRequests.user": { $ne: req.user.id },
+      },
+      {
+        $push: {
+          bookingRequests: { user: req.user.id, status: "pending" },
+        },
+      },
+      { returnDocument: "after" },
     );
-    if (existingRequest) {
-      if (existingRequest.status === "accepted") {
-        return res.status(400).json({
-          message: "Your request has already been accepted",
-        });
+
+    if (!updatedRide) {
+      const ride = await createrideModel.findById(rideId);
+      if (!ride) return res.status(404).json({ message: "Ride not found" });
+
+      const existingRequest = ride.bookingRequests.find(
+        (r) => r.user.toString() === req.user.id.toString(),
+      );
+      if (existingRequest) {
+        if (existingRequest.status === "accepted") {
+          return res.status(400).json({
+            message: "Your request has already been accepted",
+          });
+        }
+
+        if (existingRequest.status === "pending") {
+          return res.status(400).json({
+            message: "Your request is pending",
+          });
+        }
+
+        if (existingRequest.status === "rejected") {
+          return res.status(400).json({
+            message: "Your request was rejected",
+          });
+        }
       }
 
-      if (existingRequest.status === "pending") {
-        return res.status(400).json({
-          message: "Your request is already pending",
-        });
-      }
-
-      if (existingRequest.status === "rejected") {
-        return res.status(400).json({
-          message: "Your request was rejected",
-        });
-      }
+      return res
+        .status(500)
+        .json({ message: "Unable to create booking request" });
     }
-    ride.bookingRequests.push({ user: req.user.id, status: "pending" });
-    await ride.save();
+
     return res.status(200).json({
       message:
         "Booking request sent. You will be notified once the Owner Accept the request",
