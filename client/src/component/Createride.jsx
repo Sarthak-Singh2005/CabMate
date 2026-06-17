@@ -20,7 +20,7 @@ export default function Createride() {
     try {
       const res = await fetch(
         isEdit
-          ? `http://localhost:5000/api/rides/edit`
+          ? `http://localhost:5000/api/rides/${id1}/edit`
           : "http://localhost:5000/api/rides/createride",
         {
           method: isEdit ? "PATCH" : "POST",
