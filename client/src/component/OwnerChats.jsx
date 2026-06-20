@@ -18,14 +18,14 @@ export default function OwnerChats() {
       });
 
       const data = await res.json();
-      console.log("conversations",data);
-      console.log("conversations1",data.conversations);
+      console.log("conversations", data);
+      const convs = Array.isArray(data.conversations) ? data.conversations : [];
       if (res.ok) {
-
-        setConversations(data.conversations || []);
+        setConversations(convs);
         if (data.ownerId) setOwnerId(data.ownerId);
+        if (convs.length === 0 && data.message) setMessage(data.message);
       } else {
-        setMessage(data.message);
+        setMessage(data.message || "Unable to fetch conversations");
       }
     } catch (err) {
       console.log(err);
@@ -95,7 +95,6 @@ export default function OwnerChats() {
       );
       const data = await res.json();
       if (res.ok) {
-        // remove passenger from pending list
         setPendingPassengers((prev) => prev.filter((id) => id !== passengerId));
         alert(data.message);
       } else {
@@ -105,6 +104,7 @@ export default function OwnerChats() {
       console.log(err);
     }
   };
+
   useEffect(() => {
     fetchChats();
   }, [rideId]);
@@ -124,7 +124,7 @@ export default function OwnerChats() {
             (p) => p._id && p._id.toString() !== ownerId.toString(),
           );
           if (passenger) {
-            const id = passenger._id.toString(); //passenger id
+            const id = passenger._id.toString(); 
             passengerMap.set(id, {
               _id: id,
               name: passenger.name,
@@ -141,9 +141,6 @@ export default function OwnerChats() {
         });
 
         const combined = Array.from(passengerMap.values());
-        if(combined.length<0){
-          setMessage()
-        }
         return combined.map((passenger) => {
           const convId = passenger.conversationId;
           return (

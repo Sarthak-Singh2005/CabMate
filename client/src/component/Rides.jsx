@@ -5,8 +5,6 @@ import Searchride from "./Searchride";
 import Ridesavail from "./Ridesavail";
 import { useNavigate } from "react-router-dom";
 import Owneravail from "./Owneravail";
-import { socket } from "../socket";
-import { toast } from "react-hot-toast";
 export default function Rides() {
   const [to, setTo] = useState("");
   const [from, setFrom] = useState("");
@@ -56,14 +54,6 @@ export default function Rides() {
     e.preventDefault();
     navigate("/createride");
   };
-  useEffect(() => {
-    socket.on("notification", (data) => {
-      toast.success(data.message);
-    });
-    return () => {
-      socket.off("notification");
-    };
-  }, []);
   return (
     <div className="rides">
       <div className="search-ride-card">
