@@ -1,7 +1,6 @@
 const Conversation = require("./conversation.model");
-
+const { getIo } = require("../../socket");
 const Message = require("./message.model");
-
 const Ride = require("../createRide/createRide.model");
 
 async function createConversation(req, res) {
@@ -88,7 +87,27 @@ async function sendMessage(req, res) {
     const { conversationId, text } = req.body;
 
     const sender = req.user.id;
-    const newMessage = await Message.create({ conversationId, sender, text });
+    let newMessage = await Message.create({ conversationId, sender, text });
+    newMessage = await Message.findById(newMessage._id).populate(
+      "sender",
+      "name _id",
+    );
+    const conversation =
+      await Conversation.findById(conversationId).select("participants");
+    const io = getIo();
+
+    if (conversation && Array.isArray(conversation.participants)) {
+      const receiver = conversation.participants.find(
+        (participant) => participant.toString() !== sender.toString(),
+      );
+      if (receiver) {
+        io.to(receiver.toString()).emit("notification", {
+          type: "new_message",
+          newMessage,
+        });
+      }
+    }
+
     return res.status(201).json({
       newMessage,
     });

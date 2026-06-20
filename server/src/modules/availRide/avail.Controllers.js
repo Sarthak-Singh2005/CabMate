@@ -1,5 +1,5 @@
 const createrideModel = require("../createRide/createRide.model");
-
+const { getIo } = require("../../socket");
 async function availRide(req, res) {
   try {
     const availrides = await createrideModel.find({
@@ -89,6 +89,13 @@ async function reqRide(req, res) {
         .json({ message: "Unable to create booking request" });
     }
 
+    const io = getIo();
+
+    io.to(updatedRide.createdBy.toString()).emit("notification", {
+      type: "booking_request",
+      message: "New booking request received",
+    });
+
     return res.status(200).json({
       message:
         "Booking request sent. You will be notified once the Owner Accept the request",
@@ -140,6 +147,11 @@ async function acceptRide(req, res) {
     ride.bookingRequests[reqIndex].status = "accepted";
     ride.vacantseat -= 1;
     await ride.save();
+    const io = getIo();
+    io.to(passengerId).emit("notification", {
+      type: "booking_accepted",
+      message: "Request accepted",
+    });
     return res.status(200).json({ message: "Request accepted" });
   } catch (err) {
     console.error(err);
@@ -152,28 +164,39 @@ async function rejectRide(req, res) {
   try {
     const { rideId, passengerId } = req.body;
     if (!rideId || !passengerId) {
-      return res.status(404).json({ message: "rideId or passengerNot Found" });
+      return res.status(400).json({ message: "Missing rideId or passengerId" });
     }
     const ride = await createrideModel.findById(rideId);
     if (!ride) {
-      return res.status(404).json({ message: "Ride Not Found" });
-    } else {
-      const request = ride.bookingRequests.find(
-        (r) =>
-          r.user.toString() === passengerId.toString() &&
-          r.status === "pending",
-      );
-      if (request) {
-        request.status = "rejected";
-        await ride.save();
-        return res.status(200).json({ message: "Request rejected" });
-      }
+      return res.status(404).json({ message: "Ride not found" });
     }
-  } catch (er) {
+
+    const request = ride.bookingRequests.find(
+      (r) =>
+        r.user.toString() === passengerId.toString() && r.status === "pending",
+    );
+
+    if (!request) {
+      return res
+        .status(404)
+        .json({ message: "Pending booking request not found" });
+    }
+
+    request.status = "rejected";
+    await ride.save();
+
+    const io = getIo();
+    io.to(passengerId).emit("notification", {
+      type: "booking_rejected",
+      message: "Your booking request was rejected by the owner.",
+    });
+
+    return res.status(200).json({ message: "Request rejected" });
+  } catch (err) {
+    console.error(err);
     return res.status(500).json({
       message: "Server Error",
     });
-    console.log(err);
   }
 }
 

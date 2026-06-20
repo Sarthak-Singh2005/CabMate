@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-
 import { useParams } from "react-router-dom";
+import { socket } from "../socket";
 
 export default function Chat() {
   const { id } = useParams();
@@ -24,6 +24,21 @@ export default function Chat() {
   useEffect(() => {
     fetchMessages();
   }, []);
+
+  useEffect(() => {
+    const handleIncoming = (data) => {
+      if (data?.type !== "new_message") return;
+      const incoming = data?.newMessage;
+      if (!incoming) return;
+      if (String(incoming.conversationId) === id) {
+        setMessages((prev) => [...prev, incoming]);
+      }
+    };
+
+    socket.on("notification", handleIncoming);
+    return () => socket.off("notification", handleIncoming);
+  }, [id]);
+
   const sendMessage = async () => {
     try {
       if (text.trim() === "") {
