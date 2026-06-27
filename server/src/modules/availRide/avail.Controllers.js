@@ -170,24 +170,42 @@ async function acceptRide(req, res) {
     if (ownerId !== currentUserId)
       return res.status(403).json({ message: "Not authorized" });
 
-    const reqIndex = ride.bookingRequests.findIndex(
-      (r) =>
-        r.user.toString() === passengerId.toString() && r.status === "pending",
-    );
-    if (reqIndex === -1)
-      return res.status(404).json({ message: "Pending request not found" });
+    const updatedRide = await createrideModel.findOneAndUpdate(
+      {
+        _id: rideId,
 
-    if (ride.vacantseat <= 0) {
-      ride.bookingRequests[reqIndex].status = "accepted";
-      await ride.save();
+        createdBy: currentUserId,
+
+        vacantseat: { $gt: 0 },
+
+        bookingRequests: {
+          $elemMatch: {
+            user: passengerId,
+            status: "pending",
+          },
+        },
+      },
+
+      {
+        $inc: {
+          vacantseat: -1,
+        },
+
+        $set: {
+          "bookingRequests.$.status": "accepted",
+        },
+      },
+
+      {
+        returnDocument: "after",
+      },
+    );
+
+    if (!updatedRide) {
       return res.status(400).json({
-        message: "No seats left in the vehicle",
+        message: "No seats available or request already processed",
       });
     }
-
-    ride.bookingRequests[reqIndex].status = "accepted";
-    ride.vacantseat -= 1;
-    await ride.save();
 
     const io = getIo();
     const owner = await userModel.findById(ownerId);
