@@ -1,13 +1,79 @@
 import React, { useState } from "react";
 import { FaBell } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+
 import "../index.css";
 
 export default function NotificationBell({
   notifications,
   unreadCount,
   onMarkAllRead,
+  setNotifications,
+  setUnreadCount,
 }) {
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
+
+  async function handleNotificationClick(notification) {
+    try {
+      console.log(notification);
+      console.log("conversation =", notification.conversation);
+
+      console.log("_id =", notification._id);
+      console.log("ride =", notification.ride);
+      console.log("conversation =", notification.conversation);
+
+      // Mark notification as read
+      if (!notification.isRead && notification._id) {
+        const res = await fetch(
+          `http://localhost:5000/api/notifications/${notification._id}/read`,
+          {
+            method: "PATCH",
+            credentials: "include",
+          },
+        );
+
+        if (res.ok) {
+          setNotifications((prev) =>
+            prev.map((n) =>
+              n._id === notification._id ? { ...n, isRead: true } : n,
+            ),
+          );
+
+          setUnreadCount((prev) => Math.max(prev - 1, 0));
+        }
+      }
+
+      switch (notification.type) {
+        case "booking_request":
+          if (notification.ride) {
+            navigate(`/ownerchats/${notification.ride}`);
+          }
+          break;
+
+        case "booking_accepted":
+          navigate("/rides");
+          break;
+
+        case "booking_rejected":
+          navigate("/rides");
+          break;
+
+        case "new_message":
+          if (notification.conversation) {
+            navigate(`/chat/${notification.conversation}`);
+          }
+          break;
+
+        default:
+          break;
+      }
+
+      setOpen(false);
+    } catch (err) {
+      console.log(err);
+    }
+  }
 
   return (
     <div className="notification-bell-wrapper">
@@ -17,6 +83,7 @@ export default function NotificationBell({
         aria-label="Notifications"
       >
         <FaBell size={24} />
+
         {unreadCount > 0 && (
           <span className="notification-badge">{unreadCount}</span>
         )}
@@ -26,6 +93,7 @@ export default function NotificationBell({
         <div className="notification-dropdown">
           <div className="notification-dropdown-header">
             <span>Notifications</span>
+
             <button className="notification-mark-all" onClick={onMarkAllRead}>
               Mark all read
             </button>
@@ -36,7 +104,11 @@ export default function NotificationBell({
           ) : (
             notifications.map((notification) => (
               <div
-                key={notification._id}
+                key={notification._id || Math.random()}
+                onClick={() => handleNotificationClick(notification)}
+                style={{
+                  cursor: "pointer",
+                }}
                 className={`notification-item ${
                   notification.isRead ? "read" : "unread"
                 }`}
@@ -44,11 +116,15 @@ export default function NotificationBell({
                 <div className="notification-item-type">
                   {notification.type.replaceAll("_", " ")}
                 </div>
+
                 <div className="notification-item-message">
                   {notification.message}
                 </div>
+
                 <div className="notification-item-time">
-                  {new Date(notification.createdAt).toLocaleString()}
+                  {notification.createdAt
+                    ? new Date(notification.createdAt).toLocaleString()
+                    : ""}
                 </div>
               </div>
             ))

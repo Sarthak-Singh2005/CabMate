@@ -48,7 +48,11 @@ async function getRideChats(req, res) {
     const { rideId } = req.params;
 
     const currentUser = req.user.id;
-
+    if (!rideId || rideId === "undefined") {
+  return res.status(400).json({
+    message: "Ride id missing",
+  });
+}
     const ride = await Ride.findById(rideId);
 
     if (!ride) {
@@ -86,71 +90,65 @@ async function getRideChats(req, res) {
 async function sendMessage(req, res) {
   try {
     const { conversationId, text } = req.body;
-
     const sender = req.user.id;
-    let newMessage = await Message.create({ conversationId, sender, text });
+
+    const conversation = await Conversation.findById(conversationId).select(
+      "participants rideId",
+    );
+
+    if (!conversation) {
+      return res.status(404).json({
+        message: "Conversation not found",
+      });
+    }
+
+    const senderStr = sender.toString();
+
+    const isParticipant = conversation.participants.some(
+      (participant) => participant.toString() === senderStr,
+    );
+
+    if (!isParticipant) {
+      return res.status(403).json({
+        message: "Not authorized",
+      });
+    }
+
+    let newMessage = await Message.create({
+      conversationId,
+      sender,
+      text,
+    });
+
     newMessage = await Message.findById(newMessage._id).populate(
       "sender",
       "name _id",
     );
-    const conversation = await Conversation.findById(conversationId).select(
-      "participants rideId",
-    );
+
     const io = getIo();
 
-    if (
-      conversation &&
-      Array.isArray(conversation.participants) &&
-      conversation.participants.length > 0
-    ) {
-      const senderStr = sender.toString();
+    const receiver = conversation.participants.find(
+      (participant) => participant.toString() !== senderStr,
+    );
 
-      // Find the receiver - the other participant
-      const receiver = conversation.participants.find(
-        (participant) => participant.toString() !== senderStr,
-      );
+    if (receiver) {
+      const receiverStr = receiver.toString();
 
-      if (receiver) {
-        const receiverStr = receiver.toString();
+      const senderUser = await userModel.findById(senderStr).select("name");
 
-        // Ensure sender and receiver are different
-        if (senderStr !== receiverStr) {
-          const senderUser = await userModel.findById(senderStr).select("name");
-          const senderName = senderUser?.name || "User";
-          const notificationMessage = `${senderName} sent you a message`;
+      const senderName = senderUser?.name || "User";
 
-          // Log for debugging
-          console.log(
-            `[sendMessage] Sender: ${senderStr}, Receiver: ${receiverStr}`,
-          );
-          console.log(
-            `[sendMessage] Sending message notification to: ${receiverStr}`,
-          );
+      const notificationMessage = `${senderName} sent you a message`;
 
-          // Only emit notification to receiver, NOT to sender
-          io.to(receiverStr).emit("notification", {
-            type: "new_message",
-            message: notificationMessage,
-            newMessage,
-          });
+      const savedNotification = await Notification.create({
+        user: receiverStr,
+        type: "new_message",
+        message: notificationMessage,
+        ride: conversation.rideId,
+        conversation: conversation._id,
+      });
 
-          // Only create notification for receiver, NOT for sender
-          await Notification.create({
-            user: receiverStr,
-            type: "new_message",
-            message: notificationMessage,
-            ride: conversation.rideId,
-          });
-        } else {
-          console.log(
-            `[sendMessage] Sender and receiver are the same, skipping notification`,
-          );
-        }
-      } else {
-        console.log(`[sendMessage] No receiver found in conversation`);
-      }
-    } else {
-      console.log(`[sendMessage] Invalid conversation or no participants`);
+      io.to(receiverStr).emit("notification", savedNotification.toObject());
     }
 
     return res.status(201).json({
@@ -158,6 +156,7 @@ async function sendMessage(req, res) {
     });
   } catch (err) {
     console.log("[sendMessage] Error:", err);
+
     return res.status(500).json({
       message: "Server Error",
     });
@@ -166,15 +165,24 @@ async function sendMessage(req, res) {
 async function getMessages(req, res) {
   try {
     const { conversationId } = req.params;
+
+    if (!conversationId || conversationId === "undefined") {
+      return res.status(400).json({
+        message: "Conversation id missing",
+      });
+    }
+
     const messages = await Message.find({
       conversationId,
     }).populate("sender", "name");
+
     return res.status(200).json({
       messages,
       currentUser: req.user.id,
     });
   } catch (err) {
     console.log(err);
+
     return res.status(500).json({
       message: "Server Error",
     });

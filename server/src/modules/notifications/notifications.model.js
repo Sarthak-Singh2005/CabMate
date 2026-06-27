@@ -30,6 +30,11 @@ const notificationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Ride",
     },
+
+    conversation: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Conversation",
+    },
   },
   {
     timestamps: true,

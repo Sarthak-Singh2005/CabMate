@@ -4,19 +4,14 @@ import { socket } from "../socket";
 
 export function useNotifications(userId) {
   const [notifications, setNotifications] = useState([]);
-
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const res = await fetch(
-          "http://localhost:5000/api/notifications",
-
-          {
-            credentials: "include",
-          },
-        );
+        const res = await fetch("http://localhost:5000/api/notifications", {
+          credentials: "include",
+        });
 
         const data = await res.json();
 
@@ -33,11 +28,7 @@ export function useNotifications(userId) {
           window.dispatchEvent(new Event("cabmate-auth-change"));
         }
       } catch (err) {
-        console.error(
-          "Failed to load notifications",
-
-          err,
-        );
+        console.error("Failed to load notifications", err);
       }
     };
 
@@ -68,15 +59,7 @@ export function useNotifications(userId) {
         return;
       }
 
-      const pushNotification = {
-        ...notification,
-
-        isRead: false,
-
-        createdAt: new Date().toISOString(),
-
-        _id: `${Date.now()}-${Math.random()}`,
-      };
+      const pushNotification = notification;
 
       setNotifications((prev) => [pushNotification, ...prev]);
 
@@ -113,18 +96,10 @@ export function useNotifications(userId) {
       }
     };
 
-    socket.on(
-      "notification",
-
-      handleNotification,
-    );
+    socket.on("notification", handleNotification);
 
     return () => {
-      socket.off(
-        "notification",
-
-        handleNotification,
-      );
+      socket.off("notification", handleNotification);
     };
   }, [userId]);
 
@@ -136,7 +111,6 @@ export function useNotifications(userId) {
     try {
       const res = await fetch(
         "http://localhost:5000/api/notifications/mark-all-read",
-
         {
           method: "PATCH",
 
@@ -156,11 +130,7 @@ export function useNotifications(userId) {
         setUnreadCount(0);
       }
     } catch (err) {
-      console.error(
-        "Failed to mark notifications read",
-
-        err,
-      );
+      console.error("Failed to mark notifications read", err);
     }
   };
 
@@ -170,5 +140,9 @@ export function useNotifications(userId) {
     unreadCount,
 
     markAllRead,
+
+    setNotifications,
+
+    setUnreadCount,
   };
 }

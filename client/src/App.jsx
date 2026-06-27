@@ -14,8 +14,13 @@ import { useNotifications } from "./hooks/useNotifications";
 export default function App() {
   const location = useLocation();
   const userId = useCurrentUser();
-
-  const { notifications, unreadCount, markAllRead } = useNotifications(userId);
+  const {
+  notifications,
+  unreadCount,
+  markAllRead,
+  setNotifications,
+  setUnreadCount
+  } = useNotifications(userId);
 
   const shouldShowNotificationBell =
     Boolean(userId) && location.pathname !== "/";
@@ -29,6 +34,8 @@ export default function App() {
           notifications={notifications}
           unreadCount={unreadCount}
           onMarkAllRead={markAllRead}
+          setNotifications={setNotifications}
+          setUnreadCount={setUnreadCount}
         />
       )}
 

@@ -108,17 +108,14 @@ async function reqRide(req, res) {
         `[reqRide] Sending booking request notification to owner: ${ownerId}`,
       );
 
-      io.to(ownerId).emit("notification", {
-        type: "booking_request",
-        message: notificationMessage,
-      });
-
-      await Notification.create({
+      const savedNotification = await Notification.create({
         user: ownerId,
         type: "booking_request",
         message: notificationMessage,
         ride: rideId,
       });
+
+      io.to(ownerId).emit("notification", savedNotification.toObject());
     } else if (passengerId === ownerId) {
       console.log(
         `[reqRide] Passenger and owner are the same, skipping notification`,
@@ -140,6 +137,13 @@ async function reqRide(req, res) {
 async function getBookingRequests(req, res) {
   try {
     const { rideId } = req.params;
+
+    if (!rideId || rideId === "undefined") {
+      return res.status(400).json({
+        message: "Ride id missing",
+      });
+    }
+
     const ride = await createrideModel
       .findById(rideId)
       .populate("bookingRequests.user", "name");
@@ -196,18 +200,14 @@ async function acceptRide(req, res) {
     console.log(
       `[acceptRide] Sending acceptance notification to passenger: ${passengerIdStr}`,
     );
-    io.to(passengerIdStr).emit("notification", {
-      type: "booking_accepted",
-      message: `${ownerName} accepted your booking`,
-    });
-
-    // Create DB notification ONLY for the passenger
-    await Notification.create({
+    const savedNotification = await Notification.create({
       user: passengerIdStr,
       type: "booking_accepted",
       message: `${ownerName} accepted your booking`,
       ride: rideId,
     });
+
+    io.to(passengerIdStr).emit("notification", savedNotification.toObject());
 
     return res.status(200).json({ message: "Request accepted" });
   } catch (err) {
@@ -262,18 +262,14 @@ async function rejectRide(req, res) {
     console.log(
       `[rejectRide] Sending rejection notification to passenger: ${passengerIdStr}`,
     );
-    io.to(passengerIdStr).emit("notification", {
-      type: "booking_rejected",
-      message: `${ownerName} rejected your booking`,
-    });
-
-    // Create DB notification ONLY for the passenger
-    await Notification.create({
+    const savedNotification = await Notification.create({
       user: passengerIdStr,
       type: "booking_rejected",
       message: `${ownerName} rejected your booking`,
       ride: rideId,
     });
+
+    io.to(passengerIdStr).emit("notification", savedNotification.toObject());
 
     return res.status(200).json({ message: "Request rejected" });
   } catch (err) {
