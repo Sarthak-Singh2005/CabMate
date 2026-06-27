@@ -49,10 +49,10 @@ async function getRideChats(req, res) {
 
     const currentUser = req.user.id;
     if (!rideId || rideId === "undefined") {
-  return res.status(400).json({
-    message: "Ride id missing",
-  });
-}
+      return res.status(400).json({
+        message: "Ride id missing",
+      });
+    }
     const ride = await Ride.findById(rideId);
 
     if (!ride) {
@@ -166,9 +166,21 @@ async function getMessages(req, res) {
   try {
     const { conversationId } = req.params;
 
-    if (!conversationId || conversationId === "undefined") {
-      return res.status(400).json({
-        message: "Conversation id missing",
+    const conversation = await Conversation.findById(conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({
+        message: "Conversation not found",
+      });
+    }
+
+    const isParticipant = conversation.participants.some(
+      (participant) => participant.toString() === req.user.id.toString(),
+    );
+
+    if (!isParticipant) {
+      return res.status(403).json({
+        message: "Not authorized",
       });
     }
 
