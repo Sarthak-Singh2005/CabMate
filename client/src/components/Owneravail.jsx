@@ -97,7 +97,7 @@ export default function Owneravail() {
             className="book-button"
             onClick={() => navigate(`/ownerchats/${user._id}`)}
           >
-            View Chats
+            Requests & Chats
           </button>
           <button
             className="book-button"

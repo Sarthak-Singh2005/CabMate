@@ -104,6 +104,39 @@ export default function OwnerChats() {
       console.log(err);
     }
   };
+  const openConversation = async (passenger) => {
+    try {
+      // Conversation already exists
+      if (passenger.conversationId) {
+        navigate(`/chat/${passenger.conversationId}`);
+        return;
+      }
+
+      // Create conversation
+      const res = await fetch("http://localhost:5000/api/chat/conversation", {
+        method: "POST",
+        credentials: "include",
+
+        headers: {
+          "Content-Type": "application/json",
+        },
+
+        body: JSON.stringify({
+          rideId,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        navigate(`/chat/${data.conversation._id}`);
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
 
   useEffect(() => {
     fetchChats();
@@ -124,7 +157,7 @@ export default function OwnerChats() {
             (p) => p._id && p._id.toString() !== ownerId.toString(),
           );
           if (passenger) {
-            const id = passenger._id.toString(); 
+            const id = passenger._id.toString();
             passengerMap.set(id, {
               _id: id,
               name: passenger.name,
@@ -153,7 +186,7 @@ export default function OwnerChats() {
                 <h2>{passenger?.name}</h2>
                 <button
                   className="createbutton"
-                  onClick={() => navigate(`/chat/${convId}`)}
+                  onClick={() => openConversation(passenger)}
                 >
                   Click to open conversation
                 </button>
