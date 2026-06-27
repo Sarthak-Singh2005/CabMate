@@ -1,9 +1,9 @@
 const createrideModel = require("../createRide/createRide.model");
 async function editRide(req, res) {
   try {
-    const { id } = req.params;
+    const { id1 } = req.params;
     const info = req.body;
-    const user = await createrideModel.findById(id);
+    const user = await createrideModel.findById(id1);
     if (!user) {
       return res.status(404).json({ message: "User Not Found" });
     }

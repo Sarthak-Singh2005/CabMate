@@ -1,4 +1,6 @@
 const createrideModel = require("../createRide/createRide.model");
+const userModel = require("../auth/auth.model");
+const Notification = require("../notifications/notifications.model");
 const { getIo } = require("../../socket");
 async function availRide(req, res) {
   try {
@@ -89,19 +91,46 @@ async function reqRide(req, res) {
         .json({ message: "Unable to create booking request" });
     }
 
-    const io = getIo();
+    const passenger = await userModel.findById(req.user.id);
+    const ownerId = updatedRide.createdBy.toString();
+    const passengerId = req.user.id.toString();
 
-    io.to(updatedRide.createdBy.toString()).emit("notification", {
-      type: "booking_request",
-      message: "New booking request received",
-    });
+    console.log(`[reqRide] Passenger: ${passengerId}, Owner: ${ownerId}`);
+
+    // Only send notification if passenger is not the owner (defensive check)
+    if (passengerId !== ownerId && passenger) {
+      const notificationMessage = `${passenger.name} requested a seat`;
+
+      const io = getIo();
+
+      // Log the notification being sent
+      console.log(
+        `[reqRide] Sending booking request notification to owner: ${ownerId}`,
+      );
+
+      io.to(ownerId).emit("notification", {
+        type: "booking_request",
+        message: notificationMessage,
+      });
+
+      await Notification.create({
+        user: ownerId,
+        type: "booking_request",
+        message: notificationMessage,
+        ride: rideId,
+      });
+    } else if (passengerId === ownerId) {
+      console.log(
+        `[reqRide] Passenger and owner are the same, skipping notification`,
+      );
+    }
 
     return res.status(200).json({
       message:
         "Booking request sent. You will be notified once the Owner Accept the request",
     });
   } catch (err) {
-    console.error(err);
+    console.error("[reqRide] Error:", err);
     return res.status(500).json({
       message: "Server Error",
     });
@@ -126,9 +155,15 @@ async function acceptRide(req, res) {
     const { rideId, passengerId } = req.body;
     if (!rideId || !passengerId)
       return res.status(400).json({ message: "Missing rideId or passengerId" });
+
     const ride = await createrideModel.findById(rideId);
     if (!ride) return res.status(404).json({ message: "Ride not found" });
-    if (ride.createdBy.toString() !== req.user.id.toString())
+
+    const ownerId = ride.createdBy.toString();
+    const currentUserId = req.user.id.toString();
+
+    // Verify the owner is the one accepting
+    if (ownerId !== currentUserId)
       return res.status(403).json({ message: "Not authorized" });
 
     const reqIndex = ride.bookingRequests.findIndex(
@@ -137,6 +172,7 @@ async function acceptRide(req, res) {
     );
     if (reqIndex === -1)
       return res.status(404).json({ message: "Pending request not found" });
+
     if (ride.vacantseat <= 0) {
       ride.bookingRequests[reqIndex].status = "accepted";
       await ride.save();
@@ -144,17 +180,38 @@ async function acceptRide(req, res) {
         message: "No seats left in the vehicle",
       });
     }
+
     ride.bookingRequests[reqIndex].status = "accepted";
     ride.vacantseat -= 1;
     await ride.save();
+
     const io = getIo();
-    io.to(passengerId).emit("notification", {
+    const owner = await userModel.findById(ownerId);
+    const ownerName = owner?.name || "Owner";
+
+    // Convert passengerId to string for socket emission
+    const passengerIdStr = passengerId.toString();
+
+    // Send notification ONLY to the passenger
+    console.log(
+      `[acceptRide] Sending acceptance notification to passenger: ${passengerIdStr}`,
+    );
+    io.to(passengerIdStr).emit("notification", {
       type: "booking_accepted",
-      message: "Request accepted",
+      message: `${ownerName} accepted your booking`,
     });
+
+    // Create DB notification ONLY for the passenger
+    await Notification.create({
+      user: passengerIdStr,
+      type: "booking_accepted",
+      message: `${ownerName} accepted your booking`,
+      ride: rideId,
+    });
+
     return res.status(200).json({ message: "Request accepted" });
   } catch (err) {
-    console.error(err);
+    console.error("[acceptRide] Error:", err);
     return res.status(500).json({
       message: "Server Error",
     });
@@ -166,9 +223,18 @@ async function rejectRide(req, res) {
     if (!rideId || !passengerId) {
       return res.status(400).json({ message: "Missing rideId or passengerId" });
     }
+
     const ride = await createrideModel.findById(rideId);
     if (!ride) {
       return res.status(404).json({ message: "Ride not found" });
+    }
+
+    const ownerId = ride.createdBy.toString();
+    const currentUserId = req.user.id.toString();
+
+    // Verify the owner is the one rejecting
+    if (ownerId !== currentUserId) {
+      return res.status(403).json({ message: "Not authorized" });
     }
 
     const request = ride.bookingRequests.find(
@@ -186,14 +252,32 @@ async function rejectRide(req, res) {
     await ride.save();
 
     const io = getIo();
-    io.to(passengerId).emit("notification", {
+    const owner = await userModel.findById(ownerId);
+    const ownerName = owner?.name || "Owner";
+
+    // Convert passengerId to string for socket emission
+    const passengerIdStr = passengerId.toString();
+
+    // Send notification ONLY to the passenger
+    console.log(
+      `[rejectRide] Sending rejection notification to passenger: ${passengerIdStr}`,
+    );
+    io.to(passengerIdStr).emit("notification", {
       type: "booking_rejected",
-      message: "Your booking request was rejected by the owner.",
+      message: `${ownerName} rejected your booking`,
+    });
+
+    // Create DB notification ONLY for the passenger
+    await Notification.create({
+      user: passengerIdStr,
+      type: "booking_rejected",
+      message: `${ownerName} rejected your booking`,
+      ride: rideId,
     });
 
     return res.status(200).json({ message: "Request rejected" });
   } catch (err) {
-    console.error(err);
+    console.error("[rejectRide] Error:", err);
     return res.status(500).json({
       message: "Server Error",
     });

@@ -1,65 +1,48 @@
-import React, { useEffect, useState } from "react";
-import { Route, Routes } from "react-router-dom";
-import { socket } from "./socket";
-import Rides from "./component/Rides";
-import Home from "./component/Home";
-import Createride from "./component/Createride";
-import Chat1 from "./component/Chat1";
-import OwnerChats from "./component/OwnerChats";
-import { Toaster, toast } from "react-hot-toast";
+import React from "react";
+import { Route, Routes, useLocation } from "react-router-dom";
+
+import Home from "./components/Home";
+import Rides from "./components/Rides";
+import Createride from "./components/Createride";
+import Chat1 from "./components/Chat1";
+import OwnerChats from "./components/OwnerChats";
+import NotificationBell from "./components/NotificationBell";
+import { Toaster } from "react-hot-toast";
+import { useCurrentUser } from "./hooks/useCurrentUser";
+import { useNotifications } from "./hooks/useNotifications";
+
 export default function App() {
-  useEffect(() => {
-    const userId = localStorage.getItem("userId");
-    if (userId) {
-      socket.emit("join", userId);
-    }
-  }, []);
+  const location = useLocation();
+  const userId = useCurrentUser();
 
-  useEffect(() => {
-    const handleNotification = (notification) => {
-      const handlers = {
-        booking_request: () => {
-          toast.success(
-            notification.message || "New booking request received.",
-          );
-        },
+  const { notifications, unreadCount, markAllRead } = useNotifications(userId);
 
-        booking_accepted: () => {
-          toast.success(
-            notification.message || "Your booking request was accepted.",
-          );
-        },
-
-        booking_rejected: () => {
-          toast.error(
-            notification.message || "Your booking request was rejected.",
-          );
-        },
-
-        new_message: () => {
-          toast(notification.message || "You have a new message.");
-        },
-      };
-
-      handlers[notification.type]?.();
-    };
-
-    socket.on("notification", handleNotification);
-
-    return () => {
-      socket.off("notification", handleNotification);
-    };
-  }, []);
+  const shouldShowNotificationBell =
+    Boolean(userId) && location.pathname !== "/";
 
   return (
     <div>
       <Toaster />
+
+      {shouldShowNotificationBell && (
+        <NotificationBell
+          notifications={notifications}
+          unreadCount={unreadCount}
+          onMarkAllRead={markAllRead}
+        />
+      )}
+
       <Routes>
         <Route path="/" element={<Home />} />
+
         <Route path="/rides" element={<Rides />} />
+
         <Route path="/createride" element={<Createride />} />
+
         <Route path="/:id1/edit" element={<Createride />} />
+
         <Route path="/chat/:id" element={<Chat1 />} />
+
         <Route path="/ownerchats/:rideId" element={<OwnerChats />} />
       </Routes>
     </div>

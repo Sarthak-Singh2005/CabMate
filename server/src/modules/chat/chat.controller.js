@@ -1,8 +1,9 @@
 const Conversation = require("./conversation.model");
 const { getIo } = require("../../socket");
 const Message = require("./message.model");
+const userModel = require("../auth/auth.model");
 const Ride = require("../createRide/createRide.model");
-
+const Notification = require("../notifications/notifications.model");
 async function createConversation(req, res) {
   try {
     const { rideId } = req.body;
@@ -92,27 +93,71 @@ async function sendMessage(req, res) {
       "sender",
       "name _id",
     );
-    const conversation =
-      await Conversation.findById(conversationId).select("participants");
+    const conversation = await Conversation.findById(conversationId).select(
+      "participants rideId",
+    );
     const io = getIo();
 
-    if (conversation && Array.isArray(conversation.participants)) {
+    if (
+      conversation &&
+      Array.isArray(conversation.participants) &&
+      conversation.participants.length > 0
+    ) {
+      const senderStr = sender.toString();
+
+      // Find the receiver - the other participant
       const receiver = conversation.participants.find(
-        (participant) => participant.toString() !== sender.toString(),
+        (participant) => participant.toString() !== senderStr,
       );
+
       if (receiver) {
-        io.to(receiver.toString()).emit("notification", {
-          type: "new_message",
-          newMessage,
-        });
+        const receiverStr = receiver.toString();
+
+        // Ensure sender and receiver are different
+        if (senderStr !== receiverStr) {
+          const senderUser = await userModel.findById(senderStr).select("name");
+          const senderName = senderUser?.name || "User";
+          const notificationMessage = `${senderName} sent you a message`;
+
+          // Log for debugging
+          console.log(
+            `[sendMessage] Sender: ${senderStr}, Receiver: ${receiverStr}`,
+          );
+          console.log(
+            `[sendMessage] Sending message notification to: ${receiverStr}`,
+          );
+
+          // Only emit notification to receiver, NOT to sender
+          io.to(receiverStr).emit("notification", {
+            type: "new_message",
+            message: notificationMessage,
+            newMessage,
+          });
+
+          // Only create notification for receiver, NOT for sender
+          await Notification.create({
+            user: receiverStr,
+            type: "new_message",
+            message: notificationMessage,
+            ride: conversation.rideId,
+          });
+        } else {
+          console.log(
+            `[sendMessage] Sender and receiver are the same, skipping notification`,
+          );
+        }
+      } else {
+        console.log(`[sendMessage] No receiver found in conversation`);
       }
+    } else {
+      console.log(`[sendMessage] Invalid conversation or no participants`);
     }
 
     return res.status(201).json({
       newMessage,
     });
   } catch (err) {
-    console.log(err);
+    console.log("[sendMessage] Error:", err);
     return res.status(500).json({
       message: "Server Error",
     });

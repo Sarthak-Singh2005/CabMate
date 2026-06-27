@@ -140,6 +140,117 @@ body {
   position: relative;
   cursor: pointer;
 }
+
+.notification-bell-wrapper {
+  position: fixed;
+  top: 18px;
+  right: 18px;
+  z-index: 999;
+}
+
+.notification-bell-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  cursor: pointer;
+  position: relative;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.notification-bell-button:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.notification-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-dropdown {
+  margin-top: 10px;
+  width: min(360px, calc(100vw - 24px));
+  background: rgba(10, 10, 15, 0.93);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 22px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(18px);
+  overflow: hidden;
+}
+
+.notification-dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  color: #f8f3ff;
+}
+
+.notification-mark-all {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: #9e9aff;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.notification-item {
+  padding: 14px 16px;
+  display: grid;
+  gap: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+.notification-item.unread {
+  background: rgba(159, 103, 255, 0.08);
+}
+
+.notification-item-type {
+  text-transform: capitalize;
+  color: #c9b3ff;
+  font-size: 0.85rem;
+}
+
+.notification-item-message {
+  color: #f5f3ff;
+  font-size: 0.95rem;
+}
+
+.notification-item-time {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.8rem;
+}
+
+.notification-empty {
+  padding: 20px;
+  color: rgba(255, 255, 255, 0.7);
+}
 .navinfo::after {
   content: "";
   position: absolute;

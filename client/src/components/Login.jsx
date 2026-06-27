@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import { socket } from "../socket";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 export default function Login({ setIslogin }) {
   const [see, setSee] = useState(false);
@@ -22,6 +21,7 @@ export default function Login({ setIslogin }) {
       console.log("data", data);
       if (res.ok) {
         localStorage.setItem("userId", data.user.id);
+        window.dispatchEvent(new Event("cabmate-auth-change"));
         navigate("/rides");
       } else {
         alert(data.message);
@@ -30,12 +30,6 @@ export default function Login({ setIslogin }) {
       console.log(err);
     }
   };
-  useEffect(() => {
-    const userId = localStorage.getItem("userId");
-    if (userId) {
-      socket.emit("join", userId);
-    }
-  }, []);
   return (
     <form onSubmit={handleLogin}>
       <div className="accountform">

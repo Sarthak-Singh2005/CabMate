@@ -63,7 +63,7 @@ export default function Rides() {
           <div className="form-field1">
             <label className="searchText" htmlFor="from">
               From
-            </label>
+            </label>  
 
             <input
               onChange={(e) => setFrom(e.target.value)}
