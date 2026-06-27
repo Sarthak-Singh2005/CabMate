@@ -79,7 +79,7 @@ export default function Createride() {
           setPhoneno(ride.phoneno || "");
           setMessage(ride.message || "");
           setVehiclename(ride.vehiclename || "");
-          setVacantseat(ride.vacantseat || "");
+          setVacantseat(ride.vacantseat ?? "");
         }
       } catch (err) {
         console.log(err);
@@ -141,7 +141,7 @@ export default function Createride() {
             <input
               id="vacantseat"
               type="number"
-              min="1"
+              min="0"
               placeholder="Enter available seats"
               value={vacantseat}
               onChange={(e) => setVacantseat(e.target.value)}

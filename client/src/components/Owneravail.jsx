@@ -25,38 +25,6 @@ export default function Owneravail() {
       console.log(err);
     }
   };
-  const editride = async () => {
-    try {
-      const res = await fetch("http://localhost:5000/api/rides/edit/:id", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body:{
-            from,
-          to,
-          time,
-          date,
-          cost,
-          phoneno,
-          message,
-          vehiclename,
-          vacantseat,
-        },
-        credentials: "include",
-      });
-      const data = await res.json();
-
-      if (Array.isArray(data)) {
-        setOwnride(data); 
-      } else if (data.message) {
-        setMessage(data.message); 
-        setOwnride([]);
-      }
-    } catch (err) {
-      console.log(err);
-    }
-  };
   useEffect(() => {
     ownerride();
   }, []);
