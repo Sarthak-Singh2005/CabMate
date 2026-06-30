@@ -297,7 +297,35 @@ async function rejectRide(req, res) {
     });
   }
 }
-
+async function cancelRide(req, res) {
+  try {
+    const { rideId } = req.params;
+    const ride = await createrideModel.findOneAndUpdate(
+      {_id: rideId},
+      {
+        $set: { status: "Cancelled Ride" },
+      },
+      {
+        new: true,
+      },
+    );
+    if (!ride) {
+      return res.status(404).json({
+        message: "Ride not found",
+      });
+    }
+    ride.status = "Cancelled Ride";
+    return res.status(200).json({
+      message: "Ride cancelled successfully",
+      ride,
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({
+      message: "Internal Server Error",
+    });
+  }
+}
 module.exports = {
   availRide,
   ownerRide,
@@ -305,4 +333,5 @@ module.exports = {
   acceptRide,
   rejectRide,
   getBookingRequests,
+  cancelRide,
 };

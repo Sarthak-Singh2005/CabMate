@@ -35,7 +35,11 @@ const createrideModel = new mongoose.Schema(
     message: {
       type: String,
     },
-
+    status:{
+      type: String,
+      enum:["Available","Completed","Cancelled"],
+      default: "Available",
+    },
     vehiclename: {
       type: String,
       required: true,

@@ -8,6 +8,7 @@ const findride = require("./modules/findride/findride.routes");
 const chatRoutes = require("./modules/chat/chat.routes");
 const editRideRoutes = require("./modules/editRide/editRide.routes");
 const notificationRoutes = require("./modules/notifications/notifications.routes");
+const cancelRideRoutes = require("./modules/availRide/avail.routes");
 
 const app = express();
 app.use(

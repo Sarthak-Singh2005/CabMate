@@ -2,7 +2,7 @@ import React from "react";
 import { useEffect } from "react";
 import { useState } from "react";
 import "../index.css";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 export default function Owneravail() {
   const [ownride, setOwnride] = useState([]);
   const [message, setMessage] = useState("");
@@ -16,11 +16,32 @@ export default function Owneravail() {
       const data = await res.json();
 
       if (Array.isArray(data)) {
-        setOwnride(data); 
+        setOwnride(data);
       } else if (data.message) {
-        setMessage(data.message); 
+        setMessage(data.message);
         setOwnride([]);
       }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  const cancelRide = async (rideId) => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/rides/owner/cancel/${rideId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            rideId: rideId,
+          }),
+          credentials: "include",
+        },
+      );
+      const data = await res.json();
+      console.log("nowthis", data);
     } catch (err) {
       console.log(err);
     }
@@ -50,7 +71,7 @@ export default function Owneravail() {
             <h1>Vehicle Name: {user.vehiclename}</h1>
 
             {user.phoneno?.length > 0 && <h1>{user.phoneno}</h1>}
-            <h1>Cost: {user.cost}</h1> 
+            <h1>Cost: {user.cost}</h1>
           </div>
 
           <div className="avail-ride-card2">
@@ -72,6 +93,9 @@ export default function Owneravail() {
             onClick={() => navigate(`/${user._id}/edit`)}
           >
             Edit
+          </button>
+          <button className="book-button" onClick={() => cancelRide(`${user._id}`)}>
+            Cancel
           </button>
         </div>
       ))}
