@@ -7,6 +7,7 @@ async function availRide(req, res) {
     const availrides = await createrideModel.find({
       createdBy: { $ne: req.user.id },
       vacantseat: { $gt: 0 },
+      status: "Available",
     });
 
     if (availrides.length > 0) {
@@ -301,20 +302,37 @@ async function cancelRide(req, res) {
   try {
     const { rideId } = req.params;
     const ride = await createrideModel.findOneAndUpdate(
-      {_id: rideId},
+      { _id: rideId },
       {
-        $set: { status: "Cancelled Ride" },
+        $set: { status: "Cancelled" },
       },
       {
         new: true,
       },
     );
-    if (!ride) {
+    const myride = await createrideModel.findById(rideId);
+    if (!myride) {
       return res.status(404).json({
         message: "Ride not found",
       });
     }
-    ride.status = "Cancelled Ride";
+    const ownerId = myride.createdBy.toString();
+    const owner = await userModel.findById(ownerId);
+    const ownerName = owner?.name || "Owner";
+    const person = await myride.bookingRequests;
+
+    for (const p of person) {
+      const savedNotification = await Notification.create({
+        user: p.user,
+        type: "cancel_ride",
+        message: `${ownerName} Ride cancelled the ride from ${myride.from} to ${myride.to}`,
+        ride: rideId,
+      });
+      if (person.status == "accepted" || person.status == "pending") {
+        const io = getIo();
+        io.to(p.user).emit("notification", savedNotification.toObject());
+      }
+    }
     return res.status(200).json({
       message: "Ride cancelled successfully",
       ride,

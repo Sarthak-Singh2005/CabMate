@@ -13,7 +13,7 @@ async function findride(req, res) {
       query.date = date;
     }
     
-    const availrides = await createrideModel.find({...query,vacantseat: { $gt: 0 }});
+    const availrides = await createrideModel.find({...query,vacantseat: { $gt: 0 },status: "Available"});
 
     if (availrides.length > 0) {
       return res.status(200).json({

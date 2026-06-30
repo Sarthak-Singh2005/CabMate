@@ -41,7 +41,9 @@ export default function Owneravail() {
         },
       );
       const data = await res.json();
-      console.log("nowthis", data);
+      if(res.ok){
+        console.log("nowthis", data);
+      }
     } catch (err) {
       console.log(err);
     }
@@ -81,7 +83,6 @@ export default function Owneravail() {
               </div>
             )}
           </div>
-
           <button
             className="book-button"
             onClick={() => navigate(`/ownerchats/${user._id}`)}
@@ -94,9 +95,9 @@ export default function Owneravail() {
           >
             Edit
           </button>
-          <button className="book-button" onClick={() => cancelRide(`${user._id}`)}>
+          {user.status!="Cancelled" && (<button className="book-button" onClick={() => cancelRide(`${user._id}`)}>
             Cancel
-          </button>
+          </button> )}
         </div>
       ))}
     </div>

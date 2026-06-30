@@ -10,7 +10,6 @@ const notificationSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-
     type: {
       type: String,
       enum: [
@@ -18,6 +17,7 @@ const notificationSchema = new mongoose.Schema(
         "booking_accepted",
         "booking_rejected",
         "new_message",
+        "cancel_ride",
       ],
     },
 

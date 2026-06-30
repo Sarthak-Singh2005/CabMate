@@ -122,12 +122,12 @@ export default function Ridesavail() {
               </div>
             )}
           </div>
-          <button
+          {user.status=="Available" &&(<button
             className="book-button"
             onClick={() => openBookingPopup(user._id)}
           >
             Book
-          </button>
+          </button>)}
           <button className="book-button" onClick={() => chatbutton(user._id)}>
             Chat
           </button>

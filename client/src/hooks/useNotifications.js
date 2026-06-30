@@ -87,6 +87,9 @@ export function useNotifications(userId) {
         new_message: () => {
           toast(notification.message || "You have a new message.");
         },
+        cancel_ride: ()=>{
+          toast(notification.message);
+        },
       };
 
       const handler = handlers[notification.type];
