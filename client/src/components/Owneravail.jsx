@@ -25,6 +25,10 @@ export default function Owneravail() {
       console.log(err);
     }
   };
+  const handlebutton = (e) => {
+    e.preventDefault();
+    navigate("/createride");
+  };
   const cancelRide = async (rideId) => {
     try {
       const res = await fetch(
@@ -41,7 +45,7 @@ export default function Owneravail() {
         },
       );
       const data = await res.json();
-      if(res.ok){
+      if (res.ok) {
         console.log("nowthis", data);
       }
     } catch (err) {
@@ -53,53 +57,66 @@ export default function Owneravail() {
   }, []);
   return (
     <div>
-      {message && <h2 className="empty-message">{message}</h2>}
+      <div className="createRide">
+        <button className="createbutton" onClick={handlebutton}>
+          Post New Ride
+        </button>
+      </div>
+      <div className="rides">
+        <h1 className="section-heading">Your Posted Rides</h1>
+        {message && <h2 className="empty-message">{message}</h2>}
 
-      {ownride.map((user) => (
-        <div className="avail-ride-card" key={user._id}>
-          <div className="avail-ride-card1">
-            <h1>From: {user.from}</h1>
-            <h1>To: {user.to}</h1>
-            <h1>
-              Date:
-              {new Date(user.date).toLocaleDateString("en-IN", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
-            </h1>
-            <h1>Time: {user.time}</h1>
-            <h1>Vacant Seat: {user.vacantseat}</h1>
-            <h1>Vehicle Name: {user.vehiclename}</h1>
+        {ownride.map((user) => (
+          <div className="avail-ride-card" key={user._id}>
+            <div className="avail-ride-card1">
+              <h1>From: {user.from}</h1>
+              <h1>To: {user.to}</h1>
+              <h1>
+                Date:
+                {new Date(user.date).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </h1>
+              <h1>Time: {user.time}</h1>
+              <h1>Vacant Seat: {user.vacantseat}</h1>
+              <h1>Vehicle Name: {user.vehiclename}</h1>
 
-            {user.phoneno?.length > 0 && <h1>{user.phoneno}</h1>}
-            <h1>Cost: {user.cost}</h1>
-          </div>
+              {user.phoneno?.length > 0 && <h1>{user.phoneno}</h1>}
+              <h1>Cost: {user.cost}</h1>
+            </div>
 
-          <div className="avail-ride-card2">
-            {user.message?.length > 0 && (
-              <div className="additional">
-                <h1>Additional Message: {user.message}</h1>
-              </div>
+            <div className="avail-ride-card2">
+              {user.message?.length > 0 && (
+                <div className="additional">
+                  <h1>Additional Message: {user.message}</h1>
+                </div>
+              )}
+            </div>
+            <button
+              className="book-button"
+              onClick={() => navigate(`/ownerchats/${user._id}`)}
+            >
+              Requests & Chats
+            </button>
+            <button
+              className="book-button"
+              onClick={() => navigate(`/${user._id}/edit`)}
+            >
+              Edit
+            </button>
+            {user.status != "Cancelled" && (
+              <button
+                className="book-button"
+                onClick={() => cancelRide(`${user._id}`)}
+              >
+                Cancel
+              </button>
             )}
           </div>
-          <button
-            className="book-button"
-            onClick={() => navigate(`/ownerchats/${user._id}`)}
-          >
-            Requests & Chats
-          </button>
-          <button
-            className="book-button"
-            onClick={() => navigate(`/${user._id}/edit`)}
-          >
-            Edit
-          </button>
-          {user.status!="Cancelled" && (<button className="book-button" onClick={() => cancelRide(`${user._id}`)}>
-            Cancel
-          </button> )}
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

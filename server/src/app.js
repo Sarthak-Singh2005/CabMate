@@ -9,6 +9,7 @@ const chatRoutes = require("./modules/chat/chat.routes");
 const editRideRoutes = require("./modules/editRide/editRide.routes");
 const notificationRoutes = require("./modules/notifications/notifications.routes");
 const cancelRideRoutes = require("./modules/availRide/avail.routes");
+const profileRoutes = require("./modules/profile/profile.routes");
 
 const app = express();
 app.use(
@@ -26,6 +27,8 @@ app.use("/api/rides", availRoutes);
 app.use("/api/rides", findride);
 app.use("/api/chat", chatRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/profile", profileRoutes);
+
 app.get("/", (req, res) => {
   res.send("Server Working");
 });

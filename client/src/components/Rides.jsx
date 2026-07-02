@@ -3,8 +3,10 @@ import { FaSearch } from "react-icons/fa";
 import "../index.css";
 import Searchride from "./Searchride";
 import Ridesavail from "./Ridesavail";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Owneravail from "./Owneravail";
+
+
 export default function Rides() {
   const [to, setTo] = useState("");
   const [from, setFrom] = useState("");
@@ -12,6 +14,7 @@ export default function Rides() {
   const [results, setResults] = useState([]);
   const [popup, setPopup] = useState("");
   const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
   const search = async (e) => {
     e.preventDefault();
@@ -28,7 +31,6 @@ export default function Rides() {
           to,
           date,
         }),
-
         credentials: "include",
       });
 
@@ -53,6 +55,10 @@ export default function Rides() {
   const handlebutton = (e) => {
     e.preventDefault();
     navigate("/createride");
+  };
+  const handlerideButton = (e) => {
+    e.preventDefault();
+    navigate(`/ownerride`);
   };
   return (
     <div className="rides">
@@ -107,10 +113,10 @@ export default function Rides() {
         </form>
       </div>
 
-      <h1 className="section-heading">Your Posted Rides</h1>
-      <Owneravail />
-
       <div className="createRide">
+        <button className="createbutton" onClick={handlerideButton}>
+          Your Rides
+        </button>
         <button className="createbutton" onClick={handlebutton}>
           Post New Ride
         </button>
