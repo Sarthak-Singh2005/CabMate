@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { FaBell } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 
@@ -12,18 +12,24 @@ export default function NotificationBell({
   setUnreadCount,
 }) {
   const [open, setOpen] = useState(false);
+
+  const wrapperRef = useRef(null);
+
   const navigate = useNavigate();
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   async function handleNotificationClick(notification) {
     try {
-      console.log(notification);
-      console.log("conversation =", notification.conversation);
-
-      console.log("_id =", notification._id);
-      console.log("ride =", notification.ride);
-      console.log("conversation =", notification.conversation);
-
-      // Mark notification as read
       if (!notification.isRead && notification._id) {
         const res = await fetch(
           `http://localhost:5000/api/notifications/${notification._id}/read`,
@@ -44,6 +50,7 @@ export default function NotificationBell({
         }
       }
 
+      // Navigate to the correct page depending on notification type.
       switch (notification.type) {
         case "booking_request":
           if (notification.ride) {
@@ -69,6 +76,7 @@ export default function NotificationBell({
           break;
       }
 
+      // Close the notification dropdown after the user clicks one.
       setOpen(false);
     } catch (err) {
       console.log(err);
@@ -76,7 +84,7 @@ export default function NotificationBell({
   }
 
   return (
-    <div className="notification-bell-wrapper">
+    <div className="notification-bell-wrapper" ref={wrapperRef}>
       <button
         className="notification-bell-button"
         onClick={() => setOpen((prev) => !prev)}
@@ -102,32 +110,34 @@ export default function NotificationBell({
           {notifications.length === 0 ? (
             <div className="notification-empty">No notifications yet.</div>
           ) : (
-            notifications.map((notification) => (
-              <div
-                key={notification._id || Math.random()}
-                onClick={() => handleNotificationClick(notification)}
-                style={{
-                  cursor: "pointer",
-                }}
-                className={`notification-item ${
-                  notification.isRead ? "read" : "unread"
-                }`}
-              >
-                <div className="notification-item-type">
-                  {notification.type.replaceAll("_", " ")}
-                </div>
+            <div className="notification-list">
+              {notifications.map((notification) => (
+                <div
+                  key={notification._id || Math.random()}
+                  onClick={() => handleNotificationClick(notification)}
+                  style={{
+                    cursor: "pointer",
+                  }}
+                  className={`notification-item ${
+                    notification.isRead ? "read" : "unread"
+                  }`}
+                >
+                  <div className="notification-item-type">
+                    {notification.type.replaceAll("_", " ")}
+                  </div>
 
-                <div className="notification-item-message">
-                  {notification.message}
-                </div>
+                  <div className="notification-item-message">
+                    {notification.message}
+                  </div>
 
-                <div className="notification-item-time">
-                  {notification.createdAt
-                    ? new Date(notification.createdAt).toLocaleString()
-                    : ""}
+                  <div className="notification-item-time">
+                    {notification.createdAt
+                      ? new Date(notification.createdAt).toLocaleString()
+                      : ""}
+                  </div>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
       )}
