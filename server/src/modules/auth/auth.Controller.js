@@ -103,4 +103,25 @@ async function registerUserController(req, res) {
     });
   }
 }
-module.exports = { loginUserController, registerUserController };
+
+async function logoutUserController(req, res) {
+  try {
+    res.clearCookie("token", {
+      httpOnly: true,
+      secure: false,
+    });
+
+    return res.status(200).json({
+      message: "Logged out successfully",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Server Error",
+    });
+  }
+}
+module.exports = {
+  loginUserController,
+  registerUserController,
+  logoutUserController,
+};

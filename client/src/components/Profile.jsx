@@ -36,6 +36,28 @@ export default function Profile() {
 
     fetchProfile();
   }, [profileId]);
+  const handleLogout = async () => {
+  try {
+    const res = await fetch(
+      "http://localhost:5000/api/auth/logout",
+      {
+        method: "POST",
+        credentials: "include",
+      }
+    );
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert(data.message);
+      navigate("/");
+    } else {
+      alert(data.message);
+    }
+  } catch (err) {
+    console.log(err);
+  }
+};
   const handlerideButton = (e) => {
     e.preventDefault();
     navigate("/ownerride");
@@ -68,7 +90,9 @@ export default function Profile() {
           <div className="profile-actions">
             <button className="createbutton">Edit Profile</button>
             <button className="createbutton">Change Password</button>
-            <button className="createbutton">LogOut</button>
+            <button className="createbutton" onClick={handleLogout}>
+              Logout
+            </button>
           </div>
         </div>
         <div className="rides-info">
