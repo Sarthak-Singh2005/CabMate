@@ -4,6 +4,18 @@ import { useParams, useNavigate } from "react-router-dom";
 export default function Profile() {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordMessage, setPasswordMessage] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editMessage, setEditMessage] = useState("");
+  const [editLoading, setEditLoading] = useState(false);
+
   const { profileId } = useParams();
   const navigate = useNavigate();
   useEffect(() => {
@@ -37,27 +49,128 @@ export default function Profile() {
     fetchProfile();
   }, [profileId]);
   const handleLogout = async () => {
-  try {
-    const res = await fetch(
-      "http://localhost:5000/api/auth/logout",
-      {
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/logout", {
         method: "POST",
         credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert(data.message);
+        navigate("/");
+      } else {
+        alert(data.message);
       }
-    );
-
-    const data = await res.json();
-
-    if (res.ok) {
-      alert(data.message);
-      navigate("/");
-    } else {
-      alert(data.message);
+    } catch (err) {
+      console.log(err);
     }
-  } catch (err) {
-    console.log(err);
-  }
-};
+  };
+
+  const handleTogglePasswordForm = () => {
+    setShowPasswordForm((prev) => !prev);
+    setPasswordMessage("");
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setPasswordMessage("");
+
+    if (newPassword !== confirmPassword) {
+      setPasswordMessage("New passwords do not match.");
+      return;
+    }
+
+    setPasswordLoading(true);
+    try {
+      const res = await fetch(
+        "http://localhost:5000/api/auth/change-password",
+        {
+          method: "PATCH",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            currentPassword,
+            newPassword,
+            confirmPassword,
+          }),
+        },
+      );
+
+      const response = await res.json();
+      if (res.ok) {
+        setPasswordMessage(
+          response.message || "Password updated successfully.",
+        );
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setShowPasswordForm(false);
+      } else {
+        setPasswordMessage(response.message || "Unable to update password.");
+      }
+    } catch (err) {
+      console.error(err);
+      setPasswordMessage("Server error while updating password.");
+    } finally {
+      setPasswordLoading(false);
+    }
+  };
+
+  const handleToggleEditForm = () => {
+    setShowEditForm((prev) => !prev);
+    setEditMessage("");
+    if (!showEditForm) {
+      setEditName(detail?.name || "");
+      setEditEmail(detail?.email || "");
+    } else {
+      setEditName("");
+      setEditEmail("");
+    }
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    setEditMessage("");
+
+    if (!editName && !editEmail) {
+      setEditMessage("Please update at least one field.");
+      return;
+    }
+
+    setEditLoading(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/profile/", {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: editName, email: editEmail }),
+      });
+
+      const response = await res.json();
+      if (res.ok) {
+        setEditMessage(response.message || "Profile updated successfully.");
+        setDetail(response.user);
+        setShowEditForm(false);
+      } else {
+        setEditMessage(response.message || "Unable to update profile.");
+      }
+    } catch (err) {
+      console.error(err);
+      setEditMessage("Server error while updating profile.");
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
   const handlerideButton = (e) => {
     e.preventDefault();
     navigate("/ownerride");
@@ -88,12 +201,89 @@ export default function Profile() {
             })}
           </h2>
           <div className="profile-actions">
-            <button className="createbutton">Edit Profile</button>
-            <button className="createbutton">Change Password</button>
+            <button className="createbutton" onClick={handleToggleEditForm}>
+              {showEditForm ? "Cancel" : "Edit Profile"}
+            </button>
+            <button className="createbutton" onClick={handleTogglePasswordForm}>
+              {showPasswordForm ? "Cancel" : "Change Password"}
+            </button>
             <button className="createbutton" onClick={handleLogout}>
               Logout
             </button>
           </div>
+          {showPasswordForm && (
+            <form className="password-form" onSubmit={handlePasswordSubmit}>
+              <div>
+                <label className="changePasswordHeading">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="changePasswordHeading">New Password</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className="changePasswordHeading">
+                  Confirm New Password
+                </label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <button
+                className="createbutton"
+                type="submit"
+                disabled={passwordLoading}
+              >
+                {passwordLoading ? "Saving..." : "Save Password"}
+              </button>
+              {passwordMessage && (
+                <p className="form-message">{passwordMessage}</p>
+              )}
+            </form>
+          )}
+          {showEditForm && (
+            <form className="password-form" onSubmit={handleEditSubmit}>
+              <div>
+                <label className="changePasswordHeading">Name</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="changePasswordHeading">Email</label>
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                />
+              </div>
+              <button
+                className="createbutton"
+                type="submit"
+                disabled={editLoading}
+              >
+                {editLoading ? "Saving..." : "Save Profile"}
+              </button>
+              {editMessage && <p className="form-message">{editMessage}</p>}
+            </form>
+          )}
         </div>
         <div className="rides-info">
           <h2 className="ride-info-text" onClick={handlerideButton}>

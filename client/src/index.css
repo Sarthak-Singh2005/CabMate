@@ -1256,3 +1256,6 @@ body {
   gap: 20px;
   flex-wrap: wrap;
 }
+.changePasswordHeading{
+  color: white;
+}

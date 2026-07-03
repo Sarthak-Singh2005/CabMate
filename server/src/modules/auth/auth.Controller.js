@@ -120,8 +120,45 @@ async function logoutUserController(req, res) {
     });
   }
 }
+
+async function changePasswordController(req, res) {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    if (!currentPassword) {
+      return res
+        .status(400)
+        .json({ message: "Please provide current password" });
+    }
+    if (!newPassword) {
+      return res.status(400).json({ message: "Please provide a new password" });
+    }
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: "New passwords do not match" });
+    }
+
+    const user = await userModel.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Current password is incorrect" });
+    }
+
+    user.password = await bcrypt.hash(newPassword, 10);
+    await user.save();
+
+    return res.status(200).json({ message: "Password updated successfully" });
+  } catch (err) {
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
 module.exports = {
   loginUserController,
   registerUserController,
   logoutUserController,
+  changePasswordController,
 };
