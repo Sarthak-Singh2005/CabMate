@@ -1,12 +1,11 @@
 import React from "react";
 import "../index.css";
-import Navbar from "./Navbar";
 import Account from "./Account";
 import Info from "./Info";
 export default function Home() {
   return (
     <div className="home-page">
-      <Navbar />
+      
       <main className="home-main">
         <section className="home-hero">
           <Info />

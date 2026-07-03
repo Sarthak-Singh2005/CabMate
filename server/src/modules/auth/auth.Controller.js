@@ -156,9 +156,30 @@ async function changePasswordController(req, res) {
   }
 }
 
+async function forgotPasswordController(req, res) {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "Please provide email" });
+    }
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: "Email not registered" });
+    }
+
+    // NOTE: In a production app you'd generate a token and email a reset link here.
+    return res.status(200).json({
+      message: "If this email is registered, a reset link will be sent.",
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Server Error" });
+  }
+}
+
 module.exports = {
   loginUserController,
   registerUserController,
   logoutUserController,
   changePasswordController,
+  forgotPasswordController,
 };

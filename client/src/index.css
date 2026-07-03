@@ -328,6 +328,15 @@ body {
   box-shadow: 0 0 30px rgba(139, 92, 246, 0.15);
   color: white;
 }
+
+.forgot-password-page {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem 1rem;
+  background: linear-gradient(180deg, #0b0515 0%, #170d33 45%, #0b0618 100%);
+}
 .create-ride-page {
   min-height: calc(100vh - 80px);
   padding: 3rem 1.5rem;
@@ -1281,7 +1290,9 @@ body {
   border-radius: 28px;
   padding: 2.5rem;
   border: 1.5px solid rgba(195, 124, 255, 0.4);
-  box-shadow: 0 25px 80px rgba(138, 73, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 25px 80px rgba(138, 73, 255, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   max-width: 900px;
   width: min(100%, 90vw);
   max-height: 85vh;
@@ -1346,7 +1357,11 @@ body {
 }
 
 .ride-card {
-  background: linear-gradient(135deg, rgba(195, 124, 255, 0.08) 0%, rgba(138, 73, 255, 0.05) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(195, 124, 255, 0.08) 0%,
+    rgba(138, 73, 255, 0.05) 100%
+  );
   border: 1.5px solid rgba(195, 124, 255, 0.3);
   border-radius: 18px;
   padding: 1.8rem;
@@ -1358,9 +1373,15 @@ body {
 }
 
 .ride-card:hover {
-  background: linear-gradient(135deg, rgba(195, 124, 255, 0.15) 0%, rgba(138, 73, 255, 0.12) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(195, 124, 255, 0.15) 0%,
+    rgba(138, 73, 255, 0.12) 100%
+  );
   border-color: rgba(195, 124, 255, 0.6);
-  box-shadow: 0 15px 50px rgba(138, 73, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 15px 50px rgba(138, 73, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transform: translateY(-2px);
 }
 

@@ -1,5 +1,11 @@
 import React from "react";
-import { Route, Routes, useLocation, useNavigate, useParams } from "react-router-dom";
+import {
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+  useParams,
+} from "react-router-dom";
 
 import Home from "./components/Home";
 import Rides from "./components/Rides";
@@ -8,6 +14,7 @@ import Chat1 from "./components/Chat1";
 import OwnerChats from "./components/OwnerChats";
 
 import NotificationBell from "./components/NotificationBell";
+import ForgotPassword from "./components/ForgotPassword";
 import { Toaster } from "react-hot-toast";
 import { useCurrentUser } from "./hooks/useCurrentUser";
 import { useNotifications } from "./hooks/useNotifications";
@@ -29,6 +36,7 @@ export default function App() {
 
   const shouldShowNotificationBell =
     Boolean(userId) && location.pathname !== "/";
+  const shouldShowProfileIcon = shouldShowNotificationBell;
 
   return (
     <div>
@@ -45,13 +53,15 @@ export default function App() {
           />
         )}
 
-        <button
-          className="profile-icon-button"
-          onClick={() => navigate(`/profile/${userId}`)}
-          aria-label="Go to profile"
-        >
-          <HiOutlineUserCircle size={24} />
-        </button>
+        {shouldShowProfileIcon && (
+          <button
+            className="profile-icon-button"
+            onClick={() => navigate(`/profile/${userId}`)}
+            aria-label="Go to profile"
+          >
+            <HiOutlineUserCircle size={24} />
+          </button>
+        )}
       </div>
 
       <Routes>
@@ -65,10 +75,9 @@ export default function App() {
 
         <Route path="/chat/:id" element={<Chat1 />} />
 
-
         <Route path="/ownerchats/:rideId" element={<OwnerChats />} />
         <Route path="/ownerride" element={<Owneravail />} />
-
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/profile/:profileId" element={<Profile />} />
       </Routes>
     </div>

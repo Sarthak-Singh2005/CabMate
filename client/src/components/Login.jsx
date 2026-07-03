@@ -34,9 +34,6 @@ export default function Login({ setIslogin }) {
     <form onSubmit={handleLogin}>
       <div className="accountform">
         <h1 className="teco">Login to CabMate</h1>
-        <p style={{ color: "#b181ff", fontSize: "1.4rem" }}>
-          Sign in with Email
-        </p>
         <label htmlFor="email" className="teco1">
           E-mail:
         </label>
@@ -73,6 +70,21 @@ export default function Login({ setIslogin }) {
             </button>
           )}
         </div>
+        <p
+          style={{ color: "#b181ff", marginBottom: "1rem", textAlign: "right" }}
+        >
+          <span
+            onClick={() => navigate("/forgot-password")}
+            style={{
+              cursor: "pointer",
+              color: "white",
+              textDecoration: "underline",
+              display: "inline",
+            }}
+          >
+            Forgot Password?
+          </span>
+        </p>
         <button className="btnform" type="submit">
           Login
         </button>

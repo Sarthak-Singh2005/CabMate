@@ -30,7 +30,7 @@ export default function Profile() {
 
           {
             method: "GET",
-            credentials: "include", 
+            credentials: "include",
           },
         );
 
@@ -172,8 +172,7 @@ export default function Profile() {
     } finally {
       setEditLoading(false);
     }
-  };
-
+  }; 
   const handlerideButton = (e) => {
     e.preventDefault();
     navigate("/ownerride");
@@ -390,7 +389,7 @@ export default function Profile() {
                           <strong>Status:</strong> {ride.status}
                         </p>
                       </div>
-                      <button 
+                      <button
                         className="createbutton"
                         onClick={() => handleChatWithOwner(ride._id)}
                       >
