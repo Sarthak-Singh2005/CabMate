@@ -15,6 +15,9 @@ export default function Profile() {
   const [editEmail, setEditEmail] = useState("");
   const [editMessage, setEditMessage] = useState("");
   const [editLoading, setEditLoading] = useState(false);
+  const [showJoinedRides, setShowJoinedRides] = useState(false);
+  const [joinedRides, setJoinedRides] = useState([]);
+  const [joinedRidesLoading, setJoinedRidesLoading] = useState(false);
 
   const { profileId } = useParams();
   const navigate = useNavigate();
@@ -27,7 +30,7 @@ export default function Profile() {
 
           {
             method: "GET",
-            credentials: "include",
+            credentials: "include", 
           },
         );
 
@@ -175,6 +178,53 @@ export default function Profile() {
     e.preventDefault();
     navigate("/ownerride");
   };
+
+  const handleShowJoinedRides = async (e) => {
+    e.preventDefault();
+    setShowJoinedRides(true);
+    setJoinedRidesLoading(true);
+    try {
+      const res = await fetch(
+        "http://localhost:5000/api/profile/joined/rides",
+        {
+          method: "GET",
+          credentials: "include",
+        },
+      );
+
+      const response = await res.json();
+      if (res.ok) {
+        setJoinedRides(response.rides || []);
+      } else {
+        setJoinedRides([]);
+      }
+    } catch (err) {
+      console.error(err);
+      setJoinedRides([]);
+    } finally {
+      setJoinedRidesLoading(false);
+    }
+  };
+
+  const handleChatWithOwner = async (rideId) => {
+    try {
+      const res = await fetch("http://localhost:5000/api/chat/conversation", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          rideId,
+        }),
+        credentials: "include",
+      });
+      const data = await res.json();
+      console.log(data);
+      navigate(`/chat/${data.conversation._id}`);
+    } catch (err) {
+      console.log(err);
+    }
+  };
   if (loading) {
     return <div className="profile-page">Loading profile...</div>;
   }
@@ -289,11 +339,73 @@ export default function Profile() {
           <h2 className="ride-info-text" onClick={handlerideButton}>
             Posted Rides
           </h2>
-          <h2 className="ride-info-text" onClick={handlerideButton}>
+          <h2 className="ride-info-text" onClick={handleShowJoinedRides}>
             Joined Rides
           </h2>
         </div>
       </div>
+      {showJoinedRides && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Joined Rides</h2>
+              <button
+                className="close-btn"
+                onClick={() => setShowJoinedRides(false)}
+              >
+                ✕
+              </button>
+            </div>
+            <div className="modal-body">
+              {joinedRidesLoading ? (
+                <p>Loading joined rides...</p>
+              ) : joinedRides.length > 0 ? (
+                <div className="rides-list">
+                  {joinedRides.map((ride) => (
+                    <div key={ride._id} className="ride-card">
+                      <div className="ride-details">
+                        <p>
+                          <strong>From:</strong> {ride.from}
+                        </p>
+                        <p>
+                          <strong>To:</strong> {ride.to}
+                        </p>
+                        <p>
+                          <strong>Date:</strong>{" "}
+                          {new Date(ride.date).toLocaleDateString("en-IN")}
+                        </p>
+                        <p>
+                          <strong>Time:</strong> {ride.time}
+                        </p>
+                        <p>
+                          <strong>Cost:</strong> ₹{ride.cost}
+                        </p>
+                        <p>
+                          <strong>Vehicle:</strong> {ride.vehiclename}
+                        </p>
+                        <p>
+                          <strong>Owner:</strong> {ride.createdBy?.name}
+                        </p>
+                        <p>
+                          <strong>Status:</strong> {ride.status}
+                        </p>
+                      </div>
+                      <button 
+                        className="createbutton"
+                        onClick={() => handleChatWithOwner(ride._id)}
+                      >
+                        Chat
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p>You haven't joined any rides yet.</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

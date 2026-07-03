@@ -1,4 +1,6 @@
 const userModel = require("../auth/auth.model");
+const createrideModel = require("../createRide/createRide.model");
+
 async function getDetail(req, res) {
   try {
     const personId = req.params.profileId || req.user?.id;
@@ -68,4 +70,27 @@ async function updateProfile(req, res) {
   }
 }
 
-module.exports = { getDetail, updateProfile };
+async function getJoinedRides(req, res) {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const joinedRides = await createrideModel
+      .find({
+        "bookingRequests.user": userId,
+        "bookingRequests.status": "accepted",
+      })
+      .populate("createdBy", "name email");
+
+    return res.status(200).json({ rides: joinedRides });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
+  }
+}
+
+module.exports = { getDetail, updateProfile, getJoinedRides };
