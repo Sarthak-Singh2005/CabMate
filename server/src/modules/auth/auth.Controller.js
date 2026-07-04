@@ -1,7 +1,9 @@
 const userModel = require("./auth.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { OAuth2Client } = require("google-auth-library");
 
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 async function loginUserController(req, res) {
   try {
     const { email, password } = req.body;
@@ -18,6 +20,12 @@ async function loginUserController(req, res) {
     if (!user) {
       return res.status(400).json({
         message: "Wrong email or password",
+      });
+    }
+    if (!user.password) {
+      return res.status(400).json({
+        message:
+          "This account was created using Google. Please continue with Google.",
       });
     }
     const isMatch = await bcrypt.compare(password, user.password);
@@ -175,11 +183,75 @@ async function forgotPasswordController(req, res) {
     return res.status(500).json({ message: "Server Error" });
   }
 }
+async function googleLoginController(req, res) {
+  try {
+    const { credential } = req.body;
 
+    if (!credential) {
+      return res.status(400).json({
+        message: "Google credential is required",
+      });
+    }
+
+    const ticket = await client.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+
+    const { sub, email, name } = payload;
+
+    let user = await userModel.findOne({ email });
+
+    if (!user) {
+      user = await userModel.create({
+        email,
+        name,
+        googleId: sub,
+      });
+    } else if (!user.googleId) {
+      user.googleId = sub;
+      await user.save();
+    }
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+        name: user.name,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1d",
+      },
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+    });
+
+    return res.status(200).json({
+      message: "Google login successful",
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+      },
+    });
+  } catch (err) {
+    console.log(err);
+
+    return res.status(500).json({
+      message: "Google Login Failed",
+    });
+  }
+}
 module.exports = {
   loginUserController,
   registerUserController,
   logoutUserController,
   changePasswordController,
   forgotPasswordController,
+  googleLoginController,
 };

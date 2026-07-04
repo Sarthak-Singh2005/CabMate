@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { GoogleLogin } from "@react-oauth/google";
 import { useNavigate } from "react-router-dom";
 export default function Login({ setIslogin }) {
   const [error, setError] = useState("");
@@ -29,10 +30,42 @@ export default function Login({ setIslogin }) {
       console.log(err);
     }
   };
+  const handleGoogleLogin = async (credentialResponse) => {
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/google", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          credential: credentialResponse.credential,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem("userId", data.user.id);
+        window.dispatchEvent(new Event("cabmate-auth-change"));
+        navigate("/rides");
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
   return (
     <form onSubmit={handleLogin}>
       <div className="accountform">
         <h1 className="teco">Login to CabMate</h1>
+        <GoogleLogin
+          onSuccess={handleGoogleLogin}
+          onError={() => {
+            console.log("Google Login Failed");
+          }}
+        />
         <label htmlFor="email" className="teco1">
           E-mail:
         </label>
