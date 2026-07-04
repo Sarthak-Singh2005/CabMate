@@ -301,44 +301,64 @@ async function rejectRide(req, res) {
 async function cancelRide(req, res) {
   try {
     const { rideId } = req.params;
+
+    if (!rideId) {
+      return res.status(400).json({
+        message: "Missing rideId",
+      });
+    }
+
     const ride = await createrideModel.findOneAndUpdate(
-      { _id: rideId },
       {
-        $set: { status: "Cancelled" },
+        _id: rideId,
+        createdBy: req.user.id,
+      },
+      {
+        $set: {
+          status: "Cancelled",
+        },
       },
       {
         new: true,
       },
     );
-    const myride = await createrideModel.findById(rideId);
-    if (!myride) {
-      return res.status(404).json({
-        message: "Ride not found",
-      });
-    }
-    const ownerId = myride.createdBy.toString();
-    const owner = await userModel.findById(ownerId);
-    const ownerName = owner?.name || "Owner";
-    const person = await myride.bookingRequests;
 
-    for (const p of person) {
-      const savedNotification = await Notification.create({
-        user: p.user,
-        type: "cancel_ride",
-        message: `${ownerName} Ride cancelled the ride from ${myride.from} to ${myride.to}`,
-        ride: rideId,
+    if (!ride) {
+      return res.status(404).json({
+        message: "Ride not found or you are not authorized to cancel this ride",
       });
-      if (person.status == "accepted" || person.status == "pending") {
-        const io = getIo();
-        io.to(p.user).emit("notification", savedNotification.toObject());
-      }
     }
+
+    const owner = await userModel.findById(ride.createdBy).select("name");
+    const ownerName = owner?.name || "Owner";
+
+    const io = getIo();
+
+    for (const booking of ride.bookingRequests) {
+      if (booking.status !== "accepted" && booking.status !== "pending") {
+        continue;
+      }
+
+      const savedNotification = await Notification.create({
+        user: booking.user,
+        type: "cancel_ride",
+        message: `${ownerName} cancelled the ride from ${ride.from} to ${ride.to}`,
+        ride: ride._id,
+      });
+
+      io.to(booking.user.toString()).emit(
+        "notification",
+        savedNotification.toObject(),
+      );
+    }
+
     return res.status(200).json({
       message: "Ride cancelled successfully",
       ride,
     });
   } catch (err) {
-    console.log(err);
+    console.error("[cancelRide]", err);
+
     return res.status(500).json({
       message: "Internal Server Error",
     });
