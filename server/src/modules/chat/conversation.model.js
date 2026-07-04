@@ -14,9 +14,10 @@ const conversationSchema = new mongoose.Schema(
         required: true,
       },
     ],
-
-    
   },
+  conversationSchema.index({
+    rideId: 1,
+  }),
   {
     timestamps: true,
   },

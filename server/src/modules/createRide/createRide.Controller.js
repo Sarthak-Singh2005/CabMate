@@ -4,7 +4,7 @@ async function createnewride(req, res) {
   try {
     if (!to || !from || !time || !vehiclename || !vacantseat|| !date|| !cost) {
       return res.status(400).json({
-        message: "Provide all the neccessary detail",
+        message: "Provide all the neccessary details",
       });  
     }
     const ridecreate = await createrideModel.create({
@@ -20,7 +20,7 @@ async function createnewride(req, res) {
       vacantseat,
     });
     return res.status(201).json({
-      message: "Created Rides",
+      message: "Ride created successfully",
       ridecreate,
     });
     

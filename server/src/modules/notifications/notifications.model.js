@@ -36,6 +36,10 @@ const notificationSchema = new mongoose.Schema(
       ref: "Conversation",
     },
   },
+  notificationSchema.index({
+    user: 1,
+    createdAt: -1,
+  }),
   {
     timestamps: true,
   },

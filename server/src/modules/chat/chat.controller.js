@@ -8,11 +8,9 @@ async function createConversation(req, res) {
   try {
     const { rideId } = req.body;
     const currentUser = req.user.id;
-    console.log("Received rideId:", rideId);
 
     const ride = await Ride.findById(rideId);
 
-    console.log("Ride found:", ride);
     if (!ride) {
       return res.status(404).json({
         message: "Ride not found",
@@ -25,8 +23,6 @@ async function createConversation(req, res) {
         $all: [currentUser, rideOwner],
       },
     });
-    console.log("Current User:", currentUser);
-    console.log("Ride Owner:", rideOwner);
     if (!conversation) {
       conversation = await Conversation.create({
         rideId,
@@ -37,7 +33,7 @@ async function createConversation(req, res) {
       conversation,
     });
   } catch (err) {
-    console.log(err);
+    console.error("[createConversation]", err);
     return res.status(500).json({
       message: "Server Error",
     });
@@ -80,8 +76,7 @@ async function getRideChats(req, res) {
       ownerId: currentUser,
     });
   } catch (err) {
-    console.log(err);
-
+    console.error("[getRideChats]", err);
     return res.status(500).json({
       message: "Server Error",
     });
@@ -155,7 +150,7 @@ async function sendMessage(req, res) {
       newMessage,
     });
   } catch (err) {
-    console.log("[sendMessage] Error:", err);
+    console.log("[sendMessage]", err);
 
     return res.status(500).json({
       message: "Server Error",
@@ -193,8 +188,7 @@ async function getMessages(req, res) {
       currentUser: req.user.id,
     });
   } catch (err) {
-    console.log(err);
-
+    console.error("[getMessages]", err);
     return res.status(500).json({
       message: "Server Error",
     });
