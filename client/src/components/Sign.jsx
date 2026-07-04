@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 export default function Sign({ setIslogin }) {
-  const [see, setSee] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -55,28 +54,13 @@ export default function Sign({ setIslogin }) {
         <label htmlFor="password" className="teco1">
           Password
         </label>
-        <div className="passwordBox">
-          <input
-            className="teco1input"
-            onChange={(e) => setPassword(e.target.value)}
-            type={see ? "text" : "password"}
-            id="password"
-            placeholder="Enter Your Password "
-          />
-          {see ? (
-            <button
-              type="button"
-              className="icon"
-              onClick={() => setSee(false)}
-            >
-              👁️
-            </button>
-          ) : (
-            <button type="button" className="icon" onClick={() => setSee(true)}>
-              🙈
-            </button>
-          )}
-        </div>
+        <input
+          className="teco1input"
+          onChange={(e) => setPassword(e.target.value)}
+          type="password"
+          id="password"
+          placeholder="Enter Your Password"
+        />
         <button className="btnform" type="submit">
           Sign Up
         </button>

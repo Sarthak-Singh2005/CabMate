@@ -44,6 +44,13 @@ export default function Searchride(props) {
                   Cost:
                   {user.cost}
                 </h1>
+                <h1>
+                  <span className={`status-pill ${user.status?.toLowerCase()}`}>
+                    {user.status === "Cancelled" && "🔴 CANCELLED"}
+                    {user.status === "Full" && "🟠 FULL"}
+                    {user.status !== "Cancelled" && user.status !== "Full" && "🟢 ACTIVE"}
+                  </span>
+                </h1>
               </div>
 
               <div className="avail-ride-card2">

@@ -26,10 +26,6 @@ export default function Owneravail() {
       console.log(err);
     }
   };
-  const handlebutton = (e) => {
-    e.preventDefault();
-    navigate("/createride");
-  };
   const cancelRide = async (rideId) => {
     try {
       const res = await fetch(
@@ -102,6 +98,23 @@ export default function Owneravail() {
 
         {user.phoneno?.length > 0 && <h1>{user.phoneno}</h1>}
         <h1>Cost: {user.cost}</h1>
+        <h1>
+          {(() => {
+            const s = (user.status || "").toString().trim().toLowerCase();
+            let cls = "active";
+            let text = "🟢 ACTIVE";
+            if (s === "cancelled" || s === "canceled") {
+              cls = "cancelled";
+              text = "🔴 CANCELLED";
+            } else if (s === "full") {
+              cls = "full";
+              text = "🟠 FULL";
+            }
+            return (
+              <span className={`status-pill ${cls}`}>{text}</span>
+            );
+          })()}
+        </h1>
       </div>
 
       <div className="avail-ride-card2">
@@ -140,11 +153,6 @@ export default function Owneravail() {
 
   return (
     <div>
-      <div className="createRide">
-        <button className="createbutton" onClick={handlebutton}>
-          Post New Ride
-        </button>
-      </div>
       <div className="rides">
         <h1 className="section-heading">Your Posted Rides</h1>
         {message && <h2 className="empty-message">{message}</h2>}

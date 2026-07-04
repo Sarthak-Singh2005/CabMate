@@ -6,7 +6,6 @@ import Ridesavail from "./Ridesavail";
 import { useNavigate, useParams } from "react-router-dom";
 import Owneravail from "./Owneravail";
 
-
 export default function Rides() {
   const [to, setTo] = useState("");
   const [from, setFrom] = useState("");
@@ -64,12 +63,11 @@ export default function Rides() {
     <div className="rides">
       <div className="search-ride-card">
         <h1 className="search-form-heading">Search for Rides</h1>
-
         <form onSubmit={search} className="search-rides-card">
           <div className="form-field1">
             <label className="searchText" htmlFor="from">
               From
-            </label>  
+            </label>
 
             <input
               onChange={(e) => setFrom(e.target.value)}
@@ -111,15 +109,6 @@ export default function Rides() {
             <FaSearch size={40} />
           </button>
         </form>
-      </div>
-
-      <div className="createRide">
-        <button className="createbutton" onClick={handlerideButton}>
-          Your Rides
-        </button>
-        <button className="createbutton" onClick={handlebutton}>
-          Post New Ride
-        </button>
       </div>
 
       {popup && <div className="popup-message">{popup}</div>}

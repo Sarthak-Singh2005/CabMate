@@ -113,6 +113,13 @@ export default function Ridesavail() {
             <h1>Vehicle Name: {user.vehiclename}</h1>
             {user.phoneno?.length > 0 && <h1>{user.phoneno}</h1>}
             <h1>Cost: {user.cost}</h1>
+            <h1>
+              <span className={`status-pill ${user.status?.toLowerCase()}`}>
+                {user.status === "Cancelled" && "🔴 CANCELLED"}
+                {user.status === "Full" && "🟠 FULL"}
+                {user.status !== "Cancelled" && user.status !== "Full" && "🟢 ACTIVE"}
+              </span>
+            </h1>
           </div>
 
           <div className="avail-ride-card2">

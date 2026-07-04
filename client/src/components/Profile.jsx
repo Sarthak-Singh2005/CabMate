@@ -172,7 +172,7 @@ export default function Profile() {
     } finally {
       setEditLoading(false);
     }
-  }; 
+  };
   const handlerideButton = (e) => {
     e.preventDefault();
     navigate("/ownerride");
@@ -334,14 +334,6 @@ export default function Profile() {
             </form>
           )}
         </div>
-        <div className="rides-info">
-          <h2 className="ride-info-text" onClick={handlerideButton}>
-            Posted Rides
-          </h2>
-          <h2 className="ride-info-text" onClick={handleShowJoinedRides}>
-            Joined Rides
-          </h2>
-        </div>
       </div>
       {showJoinedRides && (
         <div className="modal-overlay">
@@ -386,7 +378,11 @@ export default function Profile() {
                           <strong>Owner:</strong> {ride.createdBy?.name}
                         </p>
                         <p>
-                          <strong>Status:</strong> {ride.status}
+                          <span className={`status-pill ${ride.status?.toLowerCase()}`}>
+                            {ride.status === "Cancelled" && "🔴 CANCELLED"}
+                            {ride.status === "Full" && "🟠 FULL"}
+                            {ride.status !== "Cancelled" && ride.status !== "Full" && "🟢 ACTIVE"}
+                          </span>
                         </p>
                       </div>
                       <button
