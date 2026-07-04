@@ -3,7 +3,6 @@ const createrideModel = require("../createRide/createRide.model");
 async function editRide(req, res) {
   try {
     const { id1 } = req.params;
-    const info = req.body;
 
     const ride = await createrideModel.findById(id1);
 
@@ -19,9 +18,23 @@ async function editRide(req, res) {
       });
     }
 
-    for (const key in info) {
-      ride[key] = info[key];
-    }
+    const allowedFields = [
+      "from",
+      "to",
+      "date",
+      "time",
+      "cost",
+      "phoneno",
+      "message",
+      "vehiclename",
+      "vacantseat",
+    ];
+
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        ride[field] = req.body[field];
+      }
+    });
 
     await ride.save();
 
