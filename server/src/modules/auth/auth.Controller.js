@@ -199,7 +199,11 @@ async function googleLoginController(req, res) {
     });
 
     const payload = ticket.getPayload();
-
+    if (!payload.email_verified) {
+      return res.status(401).json({
+        message: "Google email is not verified",
+      });
+    }
     const { sub, email, name } = payload;
 
     let user = await userModel.findOne({ email });

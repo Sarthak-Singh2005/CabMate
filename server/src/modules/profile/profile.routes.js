@@ -8,8 +8,7 @@ const {
 } = require("./profile.Controllers");
 const authMiddleWare = require("../../middleware/authMiddleware");
 
-router.get("/:profileId", authMiddleWare, getDetail);
 router.patch("/", authMiddleWare, updateProfile);
 router.get("/joined/rides", authMiddleWare, getJoinedRides);
-
+router.get("/:profileId", authMiddleWare, getDetail);
 module.exports = router;
