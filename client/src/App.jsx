@@ -11,7 +11,7 @@ import {
 import Home from "./components/Home";
 import Rides from "./components/Rides";
 import Createride from "./components/Createride";
-import Chat1 from "./components/Chat1";
+import Chat1 from "./components/Chat";
 import OwnerChats from "./components/OwnerChats";
 
 import NotificationBell from "./components/NotificationBell";

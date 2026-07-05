@@ -27,16 +27,13 @@ export default function Chat() {
   }, []);
 
   useEffect(() => {
-    const handleIncoming = (data) => {
-      if (data?.type !== "new_message") return;
-      const incoming = data?.newMessage;
-      if (!incoming) return;
-      if (String(incoming.conversationId) === id) {
-        setMessages((prev) => [...prev, incoming]);
-      }
+    const handleIncoming = (message) => {
+      if (String(message.conversationId) !== id) return;
+
+      setMessages((prev) => [...prev, message]);
     };
 
-    socket.on("notification", handleIncoming);
+    socket.on("chat:message", handleIncoming);
     return () => socket.off("notification", handleIncoming);
   }, [id]);
 

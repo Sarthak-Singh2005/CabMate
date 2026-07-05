@@ -8,8 +8,7 @@ async function createConversation(req, res) {
   try {
     const { rideId } = req.body;
     const currentUser = req.user.id;
-
-    const ride = await Ride.findById(rideId);
+    const ride = await Ride.findById(rideId).select("createdBy");
 
     if (!ride) {
       return res.status(404).json({
@@ -67,7 +66,7 @@ async function getRideChats(req, res) {
       rideId,
     }).populate("participants", "name email");
     if (conversations.length === 0) {
-      return res.status(404).json({
+      return res.status(200).json({
         message: "No one have messaged you",
       });
     }
@@ -109,18 +108,24 @@ async function sendMessage(req, res) {
       });
     }
 
+    const cleanedText = text?.trim();
+
+    if (!cleanedText) {
+      return res.status(400).json({
+        message: "Message cannot be empty",
+      });
+    }
+
     let newMessage = await Message.create({
       conversationId,
       sender,
-      text,
+      text: cleanedText,
     });
 
     newMessage = await Message.findById(newMessage._id).populate(
       "sender",
       "name _id",
     );
-
-    const io = getIo();
 
     const receiver = conversation.participants.find(
       (participant) => participant.toString() !== senderStr,
@@ -129,11 +134,12 @@ async function sendMessage(req, res) {
     if (receiver) {
       const receiverStr = receiver.toString();
 
-      const senderUser = await userModel.findById(senderStr).select("name");
+      const io = getIo();
 
-      const senderName = senderUser?.name || "User";
 
-      const notificationMessage = `${senderName} sent you a message`;
+      io.to(receiverStr).emit("chat:message", newMessage);
+
+      const notificationMessage = `${newMessage.sender.name} sent you a message`;
 
       const savedNotification = await Notification.create({
         user: receiverStr,
@@ -143,14 +149,17 @@ async function sendMessage(req, res) {
         conversation: conversation._id,
       });
 
-      io.to(receiverStr).emit("notification", savedNotification.toObject());
+      io.to(receiverStr).emit(
+        "notification",
+        savedNotification.toObject(),
+      );
     }
 
     return res.status(201).json({
       newMessage,
     });
   } catch (err) {
-    console.log("[sendMessage]", err);
+    console.error("[sendMessage]", err);
 
     return res.status(500).json({
       message: "Server Error",
