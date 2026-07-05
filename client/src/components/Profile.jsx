@@ -13,12 +13,8 @@ export default function Profile() {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editName, setEditName] = useState("");
-  const [editEmail, setEditEmail] = useState("");
   const [editMessage, setEditMessage] = useState("");
   const [editLoading, setEditLoading] = useState(false);
-  const [showJoinedRides, setShowJoinedRides] = useState(false);
-  const [joinedRides, setJoinedRides] = useState([]);
-  const [joinedRidesLoading, setJoinedRidesLoading] = useState(false);
 
   const { profileId } = useParams();
   const navigate = useNavigate();
@@ -73,7 +69,11 @@ export default function Profile() {
   };
 
   const handleTogglePasswordForm = () => {
-    setShowPasswordForm((prev) => !prev);
+    setShowEditForm(false);
+
+    const nextOpen = !showPasswordForm;
+    setShowPasswordForm(nextOpen);
+
     setPasswordMessage("");
     setCurrentPassword("");
     setNewPassword("");
@@ -91,21 +91,18 @@ export default function Profile() {
 
     setPasswordLoading(true);
     try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/auth/change-password`,
-        {
-          method: "PATCH",
-          credentials: "include",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            currentPassword,
-            newPassword,
-            confirmPassword,
-          }),
+      const res = await fetch(`${API_BASE_URL}/api/auth/change-password`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        body: JSON.stringify({
+          currentPassword,
+          newPassword,
+          confirmPassword,
+        }),
+      });
 
       const response = await res.json();
       if (res.ok) {
@@ -128,14 +125,17 @@ export default function Profile() {
   };
 
   const handleToggleEditForm = () => {
-    setShowEditForm((prev) => !prev);
+    setShowPasswordForm(false);
+
+    const nextOpen = !showEditForm;
+    setShowEditForm(nextOpen);
+
     setEditMessage("");
-    if (!showEditForm) {
+
+    if (nextOpen) {
       setEditName(detail?.name || "");
-      setEditEmail(detail?.email || "");
     } else {
       setEditName("");
-      setEditEmail("");
     }
   };
 
@@ -143,8 +143,8 @@ export default function Profile() {
     e.preventDefault();
     setEditMessage("");
 
-    if (!editName && !editEmail) {
-      setEditMessage("Please update at least one field.");
+    if (!editName.trim()) {
+      setEditMessage("Name cannot be empty.");
       return;
     }
 
@@ -156,7 +156,7 @@ export default function Profile() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name: editName, email: editEmail }),
+        body: JSON.stringify({ name: editName }),
       });
 
       const response = await res.json();
@@ -174,57 +174,7 @@ export default function Profile() {
       setEditLoading(false);
     }
   };
-  const handlerideButton = (e) => {
-    e.preventDefault();
-    navigate("/ownerride");
-  };
 
-  const handleShowJoinedRides = async (e) => {
-    e.preventDefault();
-    setShowJoinedRides(true);
-    setJoinedRidesLoading(true);
-    try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/profile/joined/rides`,
-        {
-          method: "GET",
-          credentials: "include",
-        },
-      );
-
-      const response = await res.json();
-      if (res.ok) {
-        setJoinedRides(response.rides || []);
-      } else {
-        setJoinedRides([]);
-      }
-    } catch (err) {
-      console.error(err);
-      setJoinedRides([]);
-    } finally {
-      setJoinedRidesLoading(false);
-    }
-  };
-
-  const handleChatWithOwner = async (rideId) => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/chat/conversation`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          rideId,
-        }),
-        credentials: "include",
-      });
-      const data = await res.json();
-      console.log(data);
-      navigate(`/chat/${data.conversation._id}`);
-    } catch (err) {
-      console.log(err);
-    }
-  };
   if (loading) {
     return <div className="profile-page">Loading profile...</div>;
   }
@@ -316,14 +266,6 @@ export default function Profile() {
                   onChange={(e) => setEditName(e.target.value)}
                 />
               </div>
-              <div>
-                <label className="changePasswordHeading">Email</label>
-                <input
-                  type="email"
-                  value={editEmail}
-                  onChange={(e) => setEditEmail(e.target.value)}
-                />
-              </div>
               <button
                 className="createbutton"
                 type="submit"
@@ -336,72 +278,6 @@ export default function Profile() {
           )}
         </div>
       </div>
-      {showJoinedRides && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <div className="modal-header">
-              <h2>Joined Rides</h2>
-              <button
-                className="close-btn"
-                onClick={() => setShowJoinedRides(false)}
-              >
-                ✕
-              </button>
-            </div>
-            <div className="modal-body">
-              {joinedRidesLoading ? (
-                <p>Loading joined rides...</p>
-              ) : joinedRides.length > 0 ? (
-                <div className="rides-list">
-                  {joinedRides.map((ride) => (
-                    <div key={ride._id} className="ride-card">
-                      <div className="ride-details">
-                        <p>
-                          <strong>From:</strong> {ride.from}
-                        </p>
-                        <p>
-                          <strong>To:</strong> {ride.to}
-                        </p>
-                        <p>
-                          <strong>Date:</strong>{" "}
-                          {new Date(ride.date).toLocaleDateString("en-IN")}
-                        </p>
-                        <p>
-                          <strong>Time:</strong> {ride.time}
-                        </p>
-                        <p>
-                          <strong>Cost:</strong> ₹{ride.cost}
-                        </p>
-                        <p>
-                          <strong>Vehicle:</strong> {ride.vehiclename}
-                        </p>
-                        <p>
-                          <strong>Owner:</strong> {ride.createdBy?.name}
-                        </p>
-                        <p>
-                          <span className={`status-pill ${ride.status?.toLowerCase()}`}>
-                            {ride.status === "Cancelled" && "🔴 CANCELLED"}
-                            {ride.status === "Full" && "🟠 FULL"}
-                            {ride.status !== "Cancelled" && ride.status !== "Full" && "🟢 ACTIVE"}
-                          </span>
-                        </p>
-                      </div>
-                      <button
-                        className="createbutton"
-                        onClick={() => handleChatWithOwner(ride._id)}
-                      >
-                        Chat
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p>You haven't joined any rides yet.</p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
