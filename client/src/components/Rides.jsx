@@ -5,7 +5,7 @@ import Searchride from "./Searchride";
 import Ridesavail from "./Ridesavail";
 import { useNavigate, useParams } from "react-router-dom";
 import Owneravail from "./Owneravail";
-
+import { API_BASE_URL } from "../config/api";
 export default function Rides() {
   const [to, setTo] = useState("");
   const [from, setFrom] = useState("");
@@ -20,7 +20,7 @@ export default function Rides() {
     try {
       setLoading(true);
       setResults([]);
-      const res = await fetch("http://localhost:5000/api/rides/findride", {
+      const res = await fetch(`${API_BASE_URL}/api/rides/findride`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

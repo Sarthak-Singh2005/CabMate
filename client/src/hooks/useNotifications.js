@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
 import { socket } from "../socket";
-
+import { API_BASE_URL } from "../config/api";
 export function useNotifications(userId) {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -9,7 +9,7 @@ export function useNotifications(userId) {
   useEffect(() => {
     const fetchNotifications = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/notifications", {
+        const res = await fetch(`${API_BASE_URL}/api/notifications`, {
           credentials: "include",
         });
 
@@ -113,7 +113,7 @@ export function useNotifications(userId) {
 
     try {
       const res = await fetch(
-        "http://localhost:5000/api/notifications/mark-all-read",
+        `${API_BASE_URL}/api/notifications/mark-all-read`,
         {
           method: "PATCH",
 

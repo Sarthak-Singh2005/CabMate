@@ -1,6 +1,7 @@
 import React from "react";
 import { useState, useEffect } from "react";
 import "../index.css";
+import { API_BASE_URL } from "../config/api"
 import { useNavigate, useParams } from "react-router-dom";
 export default function Createride() {
   const [from, setFrom] = useState("");
@@ -20,8 +21,8 @@ export default function Createride() {
     try {
       const res = await fetch(
         isEdit
-          ? `http://localhost:5000/api/rides/${id1}/edit`
-          : "http://localhost:5000/api/rides/createride",
+          ? `${API_BASE_URL}/api/rides/${id1}/edit`
+          : `${API_BASE_URL}/api/rides/createride`,
         {
           method: isEdit ? "PATCH" : "POST",
           headers: {
@@ -59,7 +60,7 @@ export default function Createride() {
       if (!isEdit) return;
       try {
         const res = await fetch(
-          `http://localhost:5000/api/rides/fetchedit/${id1}`,
+          `${API_BASE_URL}/api/rides/fetchedit/${id1}`,
           {
             method: "GET",
             credentials: "include",

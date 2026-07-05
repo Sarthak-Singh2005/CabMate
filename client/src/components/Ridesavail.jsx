@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { API_BASE_URL } from "../config/api";
 export default function Ridesavail() {
   const [allride, setAllride] = useState([]);
   const [message1, setMessage] = useState("");
@@ -12,7 +13,7 @@ export default function Ridesavail() {
   const navigate = useNavigate();
   const availride = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/rides/avail", {
+      const res = await fetch(`${API_BASE_URL}/api/rides/avail`, {
         method: "GET",
         credentials: "include",
       });
@@ -34,7 +35,7 @@ export default function Ridesavail() {
 
   const chatbutton = async (rideId) => {
     try {
-      const res = await fetch("http://localhost:5000/api/chat/conversation", {
+      const res = await fetch(`{API_BASE_URL}/api/chat/conversation`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -67,7 +68,7 @@ export default function Ridesavail() {
     setIsRequesting(true);
     try {
       const res = await fetch(
-        "http://localhost:5000/api/rides/bookingconfirm",
+        `${API_BASE_URL}/api/rides/bookingconfirm`,
         {
           method: "POST",
           headers: {

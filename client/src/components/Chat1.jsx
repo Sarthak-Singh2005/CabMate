@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { API_BASE_URL } from "../config/api";
 import { useParams } from "react-router-dom";
 import { socket } from "../socket";
 
@@ -10,7 +11,7 @@ export default function Chat() {
   const [owner, setOwner] = useState(false);
   const fetchMessages = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/chat/messages/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/chat/messages/${id}`, {
         method: "GET",
         credentials: "include",
       });
@@ -44,7 +45,7 @@ export default function Chat() {
       if (text.trim() === "") {
         return;
       }
-      const res = await fetch("http://localhost:5000/api/chat/send", {
+      const res = await fetch(`${API_BASE_URL}/api/chat/send`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

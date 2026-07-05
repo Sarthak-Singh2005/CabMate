@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { FaBell } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-
+import { API_BASE_URL } from "../config/api";
 import "../index.css";
 
 export default function NotificationBell({
@@ -32,7 +32,7 @@ export default function NotificationBell({
     try {
       if (!notification.isRead && notification._id) {
         const res = await fetch(
-          `http://localhost:5000/api/notifications/${notification._id}/read`,
+          `${API_BASE_URL}/api/notifications/${notification._id}/read`,
           {
             method: "PATCH",
             credentials: "include",

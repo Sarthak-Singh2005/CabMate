@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
+import { API_BASE_URL } from "../config/api";
 export default function OwnerChats() {
   const { rideId } = useParams();
   const [message, setMessage] = useState("");
@@ -12,7 +13,7 @@ export default function OwnerChats() {
 
   const fetchChats = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/chat/ride/${rideId}`, {
+      const res = await fetch(`${API_BASE_URL}/api/chat/ride/${rideId}`, {
         method: "GET",
         credentials: "include",
       });
@@ -35,7 +36,7 @@ export default function OwnerChats() {
   const fetchBookingRequests = async () => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/rides/bookingrequests/${rideId}`,
+        `${API_BASE_URL}/api/rides/bookingrequests/${rideId}`,
         { method: "GET", credentials: "include" },
       );
       const data = await res.json();
@@ -64,7 +65,7 @@ export default function OwnerChats() {
   const acceptBooking = async (passengerId) => {
     try {
       const res = await fetch(
-        "http://localhost:5000/api/rides/bookingconfirm/accept",
+        `${API_BASE_URL}/api/rides/bookingconfirm/accept`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -84,8 +85,7 @@ export default function OwnerChats() {
   };
   const rejectBooking = async (passengerId) => {
     try {
-      const res = await fetch(
-        "http://localhost:5000/api/rides/bookingconfirm/reject",
+      const res = await fetch(`${API_BASE_URL}/api/rides/bookingconfirm/reject`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -113,7 +113,7 @@ export default function OwnerChats() {
       }
 
       // Create conversation
-      const res = await fetch("http://localhost:5000/api/chat/conversation", {
+      const res = await fetch(`${API_BASE_URL}/api/chat/conversation`, {
         method: "POST",
         credentials: "include",
 

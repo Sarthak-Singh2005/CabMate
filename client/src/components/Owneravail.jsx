@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useState } from "react";
 import "../index.css";
 import { useNavigate, useParams } from "react-router-dom";
+import { API_BASE_URL } from "../config/api";
 export default function Owneravail() {
   const [ownride, setOwnride] = useState([]);
   const [message, setMessage] = useState("");
@@ -10,7 +11,7 @@ export default function Owneravail() {
   const navigate = useNavigate();
   const ownerride = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/rides/owner", {
+      const res = await fetch(`${API_BASE_URL}/api/rides/owner`, {
         method: "GET",
         credentials: "include",
       });
@@ -29,7 +30,7 @@ export default function Owneravail() {
   const cancelRide = async (rideId) => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/rides/owner/cancel/${rideId}`,
+        `${API_BASE_URL}/api/rides/owner/cancel/${rideId}`,
         {
           method: "POST",
           headers: {

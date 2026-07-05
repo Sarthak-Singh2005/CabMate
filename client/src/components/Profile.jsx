@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
+import { API_BASE_URL } from "../config/api";
 export default function Profile() {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,7 +27,7 @@ export default function Profile() {
       try {
         setLoading(true);
         const res = await fetch(
-          `http://localhost:5000/api/profile/${profileId}`,
+          `${API_BASE_URL}/api/profile/${profileId}`,
 
           {
             method: "GET",
@@ -53,7 +54,7 @@ export default function Profile() {
   }, [profileId]);
   const handleLogout = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/auth/logout", {
+      const res = await fetch(`${API_BASE_URL}/api/auth/logout`, {
         method: "POST",
         credentials: "include",
       });
@@ -91,7 +92,7 @@ export default function Profile() {
     setPasswordLoading(true);
     try {
       const res = await fetch(
-        "http://localhost:5000/api/auth/change-password",
+        `${API_BASE_URL}/api/auth/change-password`,
         {
           method: "PATCH",
           credentials: "include",
@@ -149,7 +150,7 @@ export default function Profile() {
 
     setEditLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/profile/", {
+      const res = await fetch(`${API_BASE_URL}/api/profile/`, {
         method: "PATCH",
         credentials: "include",
         headers: {
@@ -184,7 +185,7 @@ export default function Profile() {
     setJoinedRidesLoading(true);
     try {
       const res = await fetch(
-        "http://localhost:5000/api/profile/joined/rides",
+        `${API_BASE_URL}/api/profile/joined/rides`,
         {
           method: "GET",
           credentials: "include",
@@ -207,7 +208,7 @@ export default function Profile() {
 
   const handleChatWithOwner = async (rideId) => {
     try {
-      const res = await fetch("http://localhost:5000/api/chat/conversation", {
+      const res = await fetch(`${API_BASE_URL}/api/chat/conversation`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
