@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import { API_BASE_URL } from "../config/api";
+import RideCard from "./RideCard";
+
 export default function Ridesavail() {
   const [allride, setAllride] = useState([]);
   const [message1, setMessage] = useState("");
@@ -10,7 +11,9 @@ export default function Ridesavail() {
   const [ReqConfirmPopup, setReqConfirmPopup] = useState(false);
   const [selectedRide, setSelectedRide] = useState(null);
   const [isRequesting, setIsRequesting] = useState(false);
+
   const navigate = useNavigate();
+
   const availride = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/rides/avail`, {
@@ -19,39 +22,47 @@ export default function Ridesavail() {
       });
 
       const data = await res.json();
+
       if (Array.isArray(data)) {
         setAllride(data);
-      } else if (data.message) {
-        setMessage(data.message);
+      } else {
+        setMessage(data.message || "No rides available.");
         setAllride([]);
       }
     } catch (err) {
       console.log(err);
     }
   };
+
   useEffect(() => {
     availride();
   }, []);
 
   const chatbutton = async (rideId) => {
     try {
-      const res = await fetch(`{API_BASE_URL}/api/chat/conversation`, {
+      const res = await fetch(`${API_BASE_URL}/api/chat/conversation`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           rideId,
         }),
-        credentials: "include",
       });
+
       const data = await res.json();
-      console.log(data);
-      navigate(`/chat/${data.conversation._id}`);
+
+      if (res.ok) {
+        navigate(`/chat/${data.conversation._id}`);
+      } else {
+        alert(data.message);
+      }
     } catch (err) {
       console.log(err);
     }
   };
+
   const openBookingPopup = (rideId) => {
     setSelectedRide(rideId);
     setShowPopup(true);
@@ -65,25 +76,28 @@ export default function Ridesavail() {
 
   const requestBooking = async () => {
     if (!selectedRide || isRequesting) return;
+
     setIsRequesting(true);
+
     try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/rides/bookingconfirm`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            bookingreq: true,
-            rideId: selectedRide,
-          }),
-          credentials: "include",
+      const res = await fetch(`${API_BASE_URL}/api/rides/bookingconfirm`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-      );
+        credentials: "include",
+        body: JSON.stringify({
+          bookingreq: true,
+          rideId: selectedRide,
+        }),
+      });
+
       const data = await res.json();
+
       setSendReqMessage(data.message);
+
       closeBookingPopup();
+
       setReqConfirmPopup(true);
     } catch (err) {
       console.log(err);
@@ -91,62 +105,28 @@ export default function Ridesavail() {
       setIsRequesting(false);
     }
   };
-
   return (
     <div>
       <h1 className="section-heading1">Available Rides</h1>
-      {message1 && <h2 className="empty-message">{message1}</h2>}
-      {allride.map((user) => (
-        <div className="avail-ride-card" key={user._id}>
-          <div className="avail-ride-card1">
-            <h1>From: {user.from}</h1>
-            <h1>To: {user.to}</h1>
-            <h1>
-              Date:
-              {new Date(user.date).toLocaleDateString("en-IN", {
-                day: "numeric",
-                month: "short",
-                year: "numeric",
-              })}
-            </h1>
-            <h1>Time: {user.time}</h1>
-            <h1>Vacant Seat: {user.vacantseat}</h1>
-            <h1>Vehicle Name: {user.vehiclename}</h1>
-            {user.phoneno?.length > 0 && <h1>{user.phoneno}</h1>}
-            <h1>Cost: {user.cost}</h1>
-            <h1>
-              <span className={`status-pill ${user.status?.toLowerCase()}`}>
-                {user.status === "Cancelled" && "🔴 CANCELLED"}
-                {user.status === "Full" && "🟠 FULL"}
-                {user.status !== "Cancelled" && user.status !== "Full" && "🟢 ACTIVE"}
-              </span>
-            </h1>
-          </div>
 
-          <div className="avail-ride-card2">
-            {user.message?.length > 0 && (
-              <div className="additional">
-                <h1>Additional Message: {user.message}</h1>
-              </div>
-            )}
-          </div>
-          {user.status=="Available" &&(<button
-            className="book-button"
-            onClick={() => openBookingPopup(user._id)}
-          >
-            Book
-          </button>)}
-          <button className="book-button" onClick={() => chatbutton(user._id)}>
-            Chat
-          </button>
-        </div>
+      {message1 && <h2 className="empty-message">{message1}</h2>}
+
+      {allride.map((user) => (
+        <RideCard
+          key={user._id}
+          user={user}
+          onBook={openBookingPopup}
+          onChat={chatbutton}
+        />
       ))}
 
       {showPopup && (
         <div className="popup">
           <div className="popup-container">
             <h2>Confirm Booking</h2>
+
             <p>Are you sure you want to book this ride?</p>
+
             <div className="popup-buttons">
               <button
                 className="popup-btn cancel-btn"
@@ -154,6 +134,7 @@ export default function Ridesavail() {
               >
                 Cancel
               </button>
+
               <button
                 className="popup-btn confirm-btn"
                 onClick={requestBooking}
@@ -165,16 +146,18 @@ export default function Ridesavail() {
           </div>
         </div>
       )}
+
       {ReqConfirmPopup && (
         <div className="popup">
           <div className="popup-container">
             <h2>{sendreqmessage}</h2>
+
             <div className="popup-buttons">
               <button
                 className="popup-btn cancel-btn"
                 onClick={closeBookingPopup}
               >
-                Ok
+                OK
               </button>
             </div>
           </div>

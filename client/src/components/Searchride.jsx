@@ -1,105 +1,142 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-
 import { API_BASE_URL } from "../config/api";
-export default function Searchride(props) {
+import RideCard from "./RideCard";
+
+export default function Searchride({ searcharr }) {
   const navigate = useNavigate();
+
+  const [showPopup, setShowPopup] = useState(false);
+  const [selectedRide, setSelectedRide] = useState(null);
+  const [sendreqmessage, setSendReqMessage] = useState("");
+  const [ReqConfirmPopup, setReqConfirmPopup] = useState(false);
+  const [isRequesting, setIsRequesting] = useState(false);
+
+  const chatbutton = async (rideId) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/chat/conversation`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          rideId,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        navigate(`/chat/${data.conversation._id}`);
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  const openBookingPopup = (rideId) => {
+    setSelectedRide(rideId);
+    setShowPopup(true);
+  };
+
+  const closeBookingPopup = () => {
+    setShowPopup(false);
+    setReqConfirmPopup(false);
+    setSelectedRide(null);
+  };
+
+  const requestBooking = async () => {
+    if (!selectedRide || isRequesting) return;
+
+    setIsRequesting(true);
+
+    try {
+      const res = await fetch(
+        `${API_BASE_URL}/api/rides/bookingconfirm`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            bookingreq: true,
+            rideId: selectedRide,
+          }),
+        }
+      );
+
+      const data = await res.json();
+
+      setSendReqMessage(data.message);
+
+      closeBookingPopup();
+
+      setReqConfirmPopup(true);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setIsRequesting(false);
+    }
+  };
 
   return (
     <div>
-      <div>
-        {props.searcharr.map((user) => {
-          return (
-            <div className="avail-ride-card" key={user._id}>
-              <div className="avail-ride-card1">
-                <h1>From: {user.from}</h1>
+      {searcharr.map((user) => (
+        <RideCard
+          key={user._id}
+          user={user}
+          onBook={openBookingPopup}
+          onChat={chatbutton}
+        />
+      ))}
 
-                <h1>To: {user.to}</h1>
+      {showPopup && (
+        <div className="popup">
+          <div className="popup-container">
+            <h2>Confirm Booking</h2>
 
-                <h1>
-                  Date:
-                  {new Date(user.date).toLocaleDateString("en-IN", {
-                    day: "numeric",
+            <p>Are you sure you want to book this ride?</p>
 
-                    month: "short",
-
-                    year: "numeric",
-                  })}
-                </h1>
-
-                <h1>Time: {user.time}</h1>
-
-                <h1>
-                  Vacant Seat:
-                  {user.vacantseat}
-                </h1>
-
-                <h1>
-                  Vehicle Name:
-                  {user.vehiclename}
-                </h1>
-
-                {user.phoneno?.length > 0 && <h1>{user.phoneno}</h1>}
-
-                <h1>
-                  Cost:
-                  {user.cost}
-                </h1>
-                <h1>
-                  <span className={`status-pill ${user.status?.toLowerCase()}`}>
-                    {user.status === "Cancelled" && "🔴 CANCELLED"}
-                    {user.status === "Full" && "🟠 FULL"}
-                    {user.status !== "Cancelled" && user.status !== "Full" && "🟢 ACTIVE"}
-                  </span>
-                </h1>
-              </div>
-
-              <div className="avail-ride-card2">
-                {user.message?.length > 0 && (
-                  <div className="additional">
-                    <h1>
-                      Addition Message:
-                      {user.message}
-                    </h1>
-                  </div>
-                )}
-              </div>
+            <div className="popup-buttons">
+              <button
+                className="popup-btn cancel-btn"
+                onClick={closeBookingPopup}
+              >
+                Cancel
+              </button>
 
               <button
-                className="book-button"
-                onClick={async () => {
-                  try {
-                    const res = await fetch(
-                      `${API_BASE_URL}/api/chat/conversation`,
-                      {
-                        method: "POST",
-
-                        headers: {
-                          "Content-Type": "application/json",
-                        },
-
-                        body: JSON.stringify({
-                          rideId: user._id,
-                        }),
-
-                        credentials: "include",
-                      },
-                    );
-
-                    const data = await res.json();
-
-                    navigate(`/chat/${data.conversation._id}`);
-                  } catch (err) {
-                    console.log(err);
-                  }
-                }}
+                className="popup-btn confirm-btn"
+                onClick={requestBooking}
+                disabled={isRequesting}
               >
-                Chat
+                {isRequesting ? "Booking..." : "Book Ride"}
               </button>
             </div>
-          );
-        })}
-      </div>
+          </div>
+        </div>
+      )}
+
+      {ReqConfirmPopup && (
+        <div className="popup">
+          <div className="popup-container">
+            <h2>{sendreqmessage}</h2>
+
+            <div className="popup-buttons">
+              <button
+                className="popup-btn cancel-btn"
+                onClick={closeBookingPopup}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
