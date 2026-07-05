@@ -1,7 +1,7 @@
 const createrideModel = require("../createRide/createRide.model");
 const userModel = require("../auth/auth.model");
-const Notification = require("../notifications/notifications.model");
 const { getIo } = require("../../socket");
+const { sendNotification } = require("../notifications/notification.service");
 async function availRide(req, res) {
   try {
     const availrides = await createrideModel.find({
@@ -109,14 +109,12 @@ async function reqRide(req, res) {
         `[reqRide] Sending booking request notification to owner: ${ownerId}`,
       );
 
-      const savedNotification = await Notification.create({
+      await sendNotification({
         user: ownerId,
         type: "booking_request",
         message: notificationMessage,
         ride: rideId,
       });
-
-      io.to(ownerId).emit("notification", savedNotification.toObject());
     } else if (passengerId === ownerId) {
       console.log(
         `[reqRide] Passenger and owner are the same, skipping notification`,
@@ -219,14 +217,12 @@ async function acceptRide(req, res) {
     console.log(
       `[acceptRide] Sending acceptance notification to passenger: ${passengerIdStr}`,
     );
-    const savedNotification = await Notification.create({
+    await sendNotification({
       user: passengerIdStr,
       type: "booking_accepted",
       message: `${ownerName} accepted your booking`,
       ride: rideId,
     });
-
-    io.to(passengerIdStr).emit("notification", savedNotification.toObject());
 
     return res.status(200).json({ message: "Request accepted" });
   } catch (err) {
@@ -281,15 +277,12 @@ async function rejectRide(req, res) {
     console.log(
       `[rejectRide] Sending rejection notification to passenger: ${passengerIdStr}`,
     );
-    const savedNotification = await Notification.create({
+    await sendNotification({
       user: passengerIdStr,
       type: "booking_rejected",
       message: `${ownerName} rejected your booking`,
       ride: rideId,
     });
-
-    io.to(passengerIdStr).emit("notification", savedNotification.toObject());
-
     return res.status(200).json({ message: "Request rejected" });
   } catch (err) {
     console.error("[rejectRide] Error:", err);
@@ -339,17 +332,12 @@ async function cancelRide(req, res) {
         continue;
       }
 
-      const savedNotification = await Notification.create({
+      await sendNotification({
         user: booking.user,
         type: "cancel_ride",
         message: `${ownerName} cancelled the ride from ${ride.from} to ${ride.to}`,
         ride: ride._id,
       });
-
-      io.to(booking.user.toString()).emit(
-        "notification",
-        savedNotification.toObject(),
-      );
     }
 
     return res.status(200).json({

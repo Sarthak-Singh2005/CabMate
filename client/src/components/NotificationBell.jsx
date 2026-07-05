@@ -50,7 +50,6 @@ export default function NotificationBell({
         }
       }
 
-      // Navigate to the correct page depending on notification type.
       switch (notification.type) {
         case "booking_request":
           if (notification.ride) {
@@ -59,11 +58,15 @@ export default function NotificationBell({
           break;
 
         case "booking_accepted":
-          navigate("/rides");
+          navigate("/joinedrides");
           break;
 
         case "booking_rejected":
-          navigate("/rides");
+          navigate("/joinedrides");
+          break;
+
+        case "cancelled_ride":
+          navigate("/joinedrides");
           break;
 
         case "new_message":
@@ -76,7 +79,6 @@ export default function NotificationBell({
           break;
       }
 
-      // Close the notification dropdown after the user clicks one.
       setOpen(false);
     } catch (err) {
       console.log(err);

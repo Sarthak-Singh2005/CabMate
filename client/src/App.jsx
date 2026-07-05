@@ -38,7 +38,6 @@ export default function App() {
   } = useNotifications(userId);
 
   const shouldShowNav = Boolean(userId) && location.pathname !== "/";
-  const shouldShowNotificationBell = shouldShowNav;
   const shouldShowProfileIcon = shouldShowNav;
 
   useEffect(() => {

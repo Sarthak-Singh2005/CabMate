@@ -3,7 +3,7 @@ const { getIo } = require("../../socket");
 const Message = require("./message.model");
 const userModel = require("../auth/auth.model");
 const Ride = require("../createRide/createRide.model");
-const Notification = require("../notifications/notifications.model");
+const { sendNotification } = require("../notifications/notification.service");
 async function createConversation(req, res) {
   try {
     const { rideId } = req.body;
@@ -136,23 +136,17 @@ async function sendMessage(req, res) {
 
       const io = getIo();
 
-
       io.to(receiverStr).emit("chat:message", newMessage);
 
       const notificationMessage = `${newMessage.sender.name} sent you a message`;
 
-      const savedNotification = await Notification.create({
+      await sendNotification({
         user: receiverStr,
         type: "new_message",
         message: notificationMessage,
         ride: conversation.rideId,
         conversation: conversation._id,
       });
-
-      io.to(receiverStr).emit(
-        "notification",
-        savedNotification.toObject(),
-      );
     }
 
     return res.status(201).json({
