@@ -30,6 +30,24 @@ async function editRide(req, res) {
       "vacantseat",
     ];
 
+    if (from && to && from.trim().toLowerCase() === to.trim().toLowerCase()) {
+      return res.status(400).json({
+        message: "Pickup and destination cannot be the same",
+      });
+    }
+
+    if (vacantseat !== undefined && Number(vacantseat) < 1) {
+      return res.status(400).json({
+        message: "At least one seat must be available",
+      });
+    }
+
+    if (cost !== undefined && Number(cost) <= 0) {
+      return res.status(400).json({
+        message: "Cost must be greater than 0",
+      });
+    }
+
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
         ride[field] = req.body[field];

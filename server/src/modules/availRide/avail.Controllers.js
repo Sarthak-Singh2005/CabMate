@@ -46,7 +46,19 @@ async function reqRide(req, res) {
     if (!bookingreq || !rideId) {
       return res.status(400).json({ message: "Missing bookingreq or rideId" });
     }
+    const ride = await createrideModel.findById(rideId).select("createdBy");
 
+    if (!ride) {
+      return res.status(404).json({
+        message: "Ride not found",
+      });
+    }
+
+    if (ride.createdBy.toString() === req.user.id.toString()) {
+      return res.status(400).json({
+        message: "You cannot request your own ride",
+      });
+    }
     const updatedRide = await createrideModel.findOneAndUpdate(
       {
         _id: rideId,
@@ -94,17 +106,12 @@ async function reqRide(req, res) {
 
     const passenger = await userModel.findById(req.user.id);
     const ownerId = updatedRide.createdBy.toString();
-    const passengerId = req.user.id.toString();
 
-    console.log(`[reqRide] Passenger: ${passengerId}, Owner: ${ownerId}`);
-
-    // Only send notification if passenger is not the owner (defensive check)
-    if (passengerId !== ownerId && passenger) {
+    if (passenger) {
       const notificationMessage = `${passenger.name} requested a seat`;
 
       const io = getIo();
 
-      // Log the notification being sent
       console.log(
         `[reqRide] Sending booking request notification to owner: ${ownerId}`,
       );
@@ -115,10 +122,6 @@ async function reqRide(req, res) {
         message: notificationMessage,
         ride: rideId,
       });
-    } else if (passengerId === ownerId) {
-      console.log(
-        `[reqRide] Passenger and owner are the same, skipping notification`,
-      );
     }
 
     return res.status(200).json({
@@ -147,9 +150,14 @@ async function getBookingRequests(req, res) {
       .findById(rideId)
       .populate("bookingRequests.user", "name");
     if (!ride) return res.status(404).json({ message: "Ride not found" });
+    if (ride.createdBy.toString() !== req.user.id.toString()) {
+      return res.status(403).json({
+        message: "Not authorized",
+      });
+    }
     return res.status(200).json({ bookingRequests: ride.bookingRequests });
   } catch (err) {
-    console.error(err);
+    console.error("[getBookingRequests]", err);
     return res.status(500).json({ message: "Server Error" });
   }
 }
@@ -165,7 +173,6 @@ async function acceptRide(req, res) {
     const ownerId = ride.createdBy.toString();
     const currentUserId = req.user.id.toString();
 
-    // Verify the owner is the one accepting
     if (ownerId !== currentUserId)
       return res.status(403).json({ message: "Not authorized" });
 
@@ -206,14 +213,11 @@ async function acceptRide(req, res) {
       });
     }
 
-    const io = getIo();
-    const owner = await userModel.findById(ownerId);
+    const owner = await userModel.findById(ownerId).select("name");
     const ownerName = owner?.name || "Owner";
 
-    // Convert passengerId to string for socket emission
     const passengerIdStr = passengerId.toString();
 
-    // Send notification ONLY to the passenger
     console.log(
       `[acceptRide] Sending acceptance notification to passenger: ${passengerIdStr}`,
     );
@@ -247,7 +251,6 @@ async function rejectRide(req, res) {
     const ownerId = ride.createdBy.toString();
     const currentUserId = req.user.id.toString();
 
-    // Verify the owner is the one rejecting
     if (ownerId !== currentUserId) {
       return res.status(403).json({ message: "Not authorized" });
     }
@@ -265,15 +268,11 @@ async function rejectRide(req, res) {
 
     request.status = "rejected";
     await ride.save();
-
-    const io = getIo();
-    const owner = await userModel.findById(ownerId);
+    const owner = await userModel.findById(ownerId).select("name");
     const ownerName = owner?.name || "Owner";
 
-    // Convert passengerId to string for socket emission
     const passengerIdStr = passengerId.toString();
 
-    // Send notification ONLY to the passenger
     console.log(
       `[rejectRide] Sending rejection notification to passenger: ${passengerIdStr}`,
     );
@@ -305,6 +304,9 @@ async function cancelRide(req, res) {
       {
         _id: rideId,
         createdBy: req.user.id,
+        status: {
+          $ne: "Cancelled",
+        },
       },
       {
         $set: {
@@ -324,8 +326,6 @@ async function cancelRide(req, res) {
 
     const owner = await userModel.findById(ride.createdBy).select("name");
     const ownerName = owner?.name || "Owner";
-
-    const io = getIo();
 
     for (const booking of ride.bookingRequests) {
       if (booking.status !== "accepted" && booking.status !== "pending") {

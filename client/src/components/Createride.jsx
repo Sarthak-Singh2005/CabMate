@@ -142,7 +142,7 @@ export default function Createride() {
             <input
               id="vacantseat"
               type="number"
-              min="0"
+              min="1"
               placeholder="Enter available seats"
               value={vacantseat}
               onChange={(e) => setVacantseat(e.target.value)}
