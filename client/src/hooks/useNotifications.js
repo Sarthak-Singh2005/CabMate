@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { toast } from "react-hot-toast";
+import toast from "react-hot-toast";
 import { socket } from "../socket";
 import { API_BASE_URL } from "../config/api";
 export function useNotifications(userId) {
@@ -85,10 +85,10 @@ export function useNotifications(userId) {
         },
 
         new_message: () => {
-          toast(notification.message || "You have a new message.");
+          toast.success(notification.message || "You have a new message.");
         },
-        cancel_ride: ()=>{
-          toast(notification.message);
+        cancel_ride: () => {
+          toast.error(notification.message);
         },
       };
 

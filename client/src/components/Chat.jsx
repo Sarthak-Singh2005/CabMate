@@ -19,7 +19,7 @@ export default function Chat() {
       setMessages(data.messages);
       setCurrentUser(data.currentUser);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
   useEffect(() => {
@@ -57,7 +57,7 @@ export default function Chat() {
       setMessages((prev) => [...prev, data.newMessage]);
       setText("");
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
   return (

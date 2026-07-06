@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
 import RideCard from "./RideCard";
+import toast from "react-hot-toast";
 
 export default function Ridesavail() {
   const [allride, setAllride] = useState([]);
@@ -30,7 +31,7 @@ export default function Ridesavail() {
         setAllride([]);
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -56,10 +57,10 @@ export default function Ridesavail() {
       if (res.ok) {
         navigate(`/chat/${data.conversation._id}`);
       } else {
-        alert(data.message);
+        toast.error(data.message);
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -100,7 +101,7 @@ export default function Ridesavail() {
 
       setReqConfirmPopup(true);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     } finally {
       setIsRequesting(false);
     }

@@ -4,11 +4,13 @@ const { getIo } = require("../../socket");
 const { sendNotification } = require("../notifications/notification.service");
 async function availRide(req, res) {
   try {
-    const availrides = await createrideModel.find({
-      createdBy: { $ne: req.user.id },
-      vacantseat: { $gt: 0 },
-      status: "Available",
-    });
+    const availrides = await createrideModel
+      .find({
+        createdBy: { $ne: req.user.id },
+        vacantseat: { $gt: 0 },
+        status: "Available",
+      })
+      .sort({ createdAt: -1 });
 
     if (availrides.length > 0) {
       return res.status(200).json(availrides);
@@ -25,7 +27,9 @@ async function availRide(req, res) {
 }
 async function ownerRide(req, res) {
   try {
-    const ownerrides = await createrideModel.find({ createdBy: req.user.id });
+    const ownerrides = await createrideModel
+      .find({ createdBy: req.user.id })
+      .sort({ createdAt: -1 });
 
     if (ownerrides.length > 0) {
       return res.status(200).json(ownerrides);
@@ -109,12 +113,6 @@ async function reqRide(req, res) {
 
     if (passenger) {
       const notificationMessage = `${passenger.name} requested a seat`;
-
-      const io = getIo();
-
-      console.log(
-        `[reqRide] Sending booking request notification to owner: ${ownerId}`,
-      );
 
       await sendNotification({
         user: ownerId,
@@ -218,9 +216,6 @@ async function acceptRide(req, res) {
 
     const passengerIdStr = passengerId.toString();
 
-    console.log(
-      `[acceptRide] Sending acceptance notification to passenger: ${passengerIdStr}`,
-    );
     await sendNotification({
       user: passengerIdStr,
       type: "booking_accepted",
@@ -273,9 +268,6 @@ async function rejectRide(req, res) {
 
     const passengerIdStr = passengerId.toString();
 
-    console.log(
-      `[rejectRide] Sending rejection notification to passenger: ${passengerIdStr}`,
-    );
     await sendNotification({
       user: passengerIdStr,
       type: "booking_rejected",

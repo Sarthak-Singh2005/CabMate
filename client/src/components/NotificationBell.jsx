@@ -81,7 +81,7 @@ export default function NotificationBell({
 
       setOpen(false);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   }
 

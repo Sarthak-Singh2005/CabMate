@@ -24,7 +24,7 @@ export default function Owneravail() {
         setOwnride([]);
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
   const cancelRide = async (rideId) => {
@@ -44,11 +44,10 @@ export default function Owneravail() {
       );
       const data = await res.json();
       if (res.ok) {
-        console.log("nowthis", data);
         ownerride();
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -111,9 +110,7 @@ export default function Owneravail() {
               cls = "full";
               text = "🟠 FULL";
             }
-            return (
-              <span className={`status-pill ${cls}`}>{text}</span>
-            );
+            return <span className={`status-pill ${cls}`}>{text}</span>;
           })()}
         </h1>
       </div>

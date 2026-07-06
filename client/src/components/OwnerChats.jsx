@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { API_BASE_URL } from "../config/api";
+import toast from "react-hot-toast";
 export default function OwnerChats() {
   const { rideId } = useParams();
   const [message, setMessage] = useState("");
@@ -19,7 +20,6 @@ export default function OwnerChats() {
       });
 
       const data = await res.json();
-      console.log("conversations", data);
       const convs = Array.isArray(data.conversations) ? data.conversations : [];
       if (res.ok) {
         setConversations(convs);
@@ -29,7 +29,7 @@ export default function OwnerChats() {
         setMessage(data.message || "Unable to fetch conversations");
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -58,7 +58,7 @@ export default function OwnerChats() {
         setBookingRequestUsers(users);
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -77,15 +77,16 @@ export default function OwnerChats() {
       if (res.ok) {
         setPendingPassengers((prev) => prev.filter((id) => id !== passengerId));
       } else {
-        console.log(data.message);
+        toast.error(data.message);
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
   const rejectBooking = async (passengerId) => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/rides/bookingconfirm/reject`,
+      const res = await fetch(
+        `${API_BASE_URL}/api/rides/bookingconfirm/reject`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -96,12 +97,12 @@ export default function OwnerChats() {
       const data = await res.json();
       if (res.ok) {
         setPendingPassengers((prev) => prev.filter((id) => id !== passengerId));
-        alert(data.message);
+        toast.success(data.message);
       } else {
-        alert(data.message);
+        toast.error(data.message);
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
   const openConversation = async (passenger) => {
@@ -131,10 +132,10 @@ export default function OwnerChats() {
       if (res.ok) {
         navigate(`/chat/${data.conversation._id}`);
       } else {
-        alert(data.message);
+        toast.error(data.message);
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 

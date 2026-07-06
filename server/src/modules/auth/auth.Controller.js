@@ -244,7 +244,7 @@ async function googleLoginController(req, res) {
       },
     });
   } catch (err) {
-    console.log(err);
+    console.error(err);
 
     return res.status(500).json({
       message: "Google Login Failed",

@@ -47,7 +47,7 @@ export default function Rides() {
         }, 3000);
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
       setLoading(false);
     }
   };

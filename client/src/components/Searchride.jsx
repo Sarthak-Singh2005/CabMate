@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
 import RideCard from "./RideCard";
+import toast from "react-hot-toast";
 
 export default function Searchride({ searcharr }) {
   const navigate = useNavigate();
@@ -30,10 +31,10 @@ export default function Searchride({ searcharr }) {
       if (res.ok) {
         navigate(`/chat/${data.conversation._id}`);
       } else {
-        alert(data.message);
+        toast.error(data.message);
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -54,20 +55,17 @@ export default function Searchride({ searcharr }) {
     setIsRequesting(true);
 
     try {
-      const res = await fetch(
-        `${API_BASE_URL}/api/rides/bookingconfirm`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({
-            bookingreq: true,
-            rideId: selectedRide,
-          }),
-        }
-      );
+      const res = await fetch(`${API_BASE_URL}/api/rides/bookingconfirm`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          bookingreq: true,
+          rideId: selectedRide,
+        }),
+      });
 
       const data = await res.json();
 
@@ -77,7 +75,7 @@ export default function Searchride({ searcharr }) {
 
       setReqConfirmPopup(true);
     } catch (err) {
-      console.log(err);
+      console.error(err);
     } finally {
       setIsRequesting(false);
     }

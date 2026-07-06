@@ -12,8 +12,15 @@ async function findride(req, res) {
     if (date) {
       query.date = date;
     }
-    
-    const availrides = await createrideModel.find({...query,vacantseat: { $gt: 0 },status: "Available"});
+
+    const availrides = await createrideModel
+      .find({
+        ...query,
+        createdBy: { $ne: req.user.id },
+        vacantseat: { $gt: 0 },
+        status: "Available",
+      })
+      .sort({ createdAt: -1 });
 
     if (availrides.length > 0) {
       return res.status(200).json({
@@ -25,7 +32,7 @@ async function findride(req, res) {
       });
     }
   } catch (err) {
-    console.log(err);
+    console.error(err);
     return res.status(500).json({
       message: "Server Error",
     });
