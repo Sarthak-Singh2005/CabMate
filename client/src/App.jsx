@@ -23,18 +23,8 @@ import { HiOutlineUserCircle } from "react-icons/hi2";
 import Profile from "./components/Profile";
 import JoinedRides from "./components/JoinedRides";
 import Owneravail from "./components/Owneravail";
+import NotFound from "./components/NotFound";
 
-function NotFound() {
-  return (
-    <div
-      className="not-found-page"
-      style={{ padding: "2rem", textAlign: "center" }}
-    >
-      <h1>404 — Page Not Found</h1>
-      <p>The page you're looking for does not exist.</p>
-    </div>
-  );
-}
 
 export default function App() {
   const location = useLocation();
