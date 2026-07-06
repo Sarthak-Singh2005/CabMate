@@ -3,6 +3,7 @@ import { GoogleLogin } from "@react-oauth/google";
 
 import { API_BASE_URL } from "../config/api";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
 export default function Sign({ setIslogin }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -20,14 +21,13 @@ export default function Sign({ setIslogin }) {
         credentials: "include",
       });
       const data = await res.json();
-      console.log("register data", data);
       if (res.ok) {
-        alert("Registration Successful");
+        toast.success(data.message || "Registration successful");
       } else {
-        alert(data.message);
+        toast.error(data.message);
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
   const handleGoogleLogin = async (credentialResponse) => {
@@ -48,12 +48,13 @@ export default function Sign({ setIslogin }) {
       if (res.ok) {
         localStorage.setItem("userId", data.user.id);
         window.dispatchEvent(new Event("cabmate-auth-change"));
+        toast.success(data.message || "Login successful");
         navigate("/rides");
       } else {
-        alert(data.message);
+        toast.error(data.message);
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
   return (
@@ -64,7 +65,7 @@ export default function Sign({ setIslogin }) {
         <GoogleLogin
           onSuccess={handleGoogleLogin}
           onError={() => {
-            console.log("Google Login Failed");
+            console.error("Google Login Failed");
           }}
         />
         <label htmlFor="name" className="teco1">

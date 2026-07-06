@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { API_BASE_URL } from "../config/api";
+import toast from "react-hot-toast";
 export default function Profile() {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -56,15 +57,17 @@ export default function Profile() {
       });
 
       const data = await res.json();
-
       if (res.ok) {
-        alert(data.message);
+        localStorage.removeItem("userId");
+        window.dispatchEvent(new Event("cabmate-auth-change"));
+
+        toast.success(data.message);
         navigate("/");
       } else {
-        alert(data.message);
+        toast.error(data.message);
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 

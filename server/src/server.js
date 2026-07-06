@@ -44,16 +44,9 @@ io.use((socket, next) => {
 });
 
 io.on("connection", (socket) => {
-  console.log("[Socket] User Connected - Socket ID:", socket.id);
-
   const joinAuthenticatedRoom = () => {
     const userIdStr = socket.user.id.toString();
     socket.join(userIdStr);
-    console.log(`[Socket] ${userIdStr} joined room - Socket ID: ${socket.id}`);
-    console.log(
-      `[Socket] Room members for ${userIdStr}:`,
-      io.sockets.adapter.rooms.get(userIdStr)?.size || 0,
-    );
   };
 
   joinAuthenticatedRoom();

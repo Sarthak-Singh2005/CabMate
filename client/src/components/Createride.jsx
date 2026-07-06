@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import "../index.css";
 import { API_BASE_URL } from "../config/api"
 import { useNavigate, useParams } from "react-router-dom";
+import toast from "react-hot-toast";
 export default function Createride() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -43,15 +44,14 @@ export default function Createride() {
         },
       );
       const data = await res.json();
-      console.log(data);
       if (res.ok) {
-        alert(data.message);
+        toast.success(data.message);
         navigate("/rides");
       } else {
-        alert(data.message);
+        toast.error(data.message);
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -68,7 +68,6 @@ export default function Createride() {
         );
 
         const data = await res.json();
-        console.log("q", data);
         if (res.ok) {
           const ride = data;
 
@@ -83,7 +82,7 @@ export default function Createride() {
           setVacantseat(ride.vacantseat ?? "");
         }
       } catch (err) {
-        console.log(err);
+        console.error(err);
       }
     };
 

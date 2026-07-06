@@ -13,7 +13,7 @@ import Rides from "./components/Rides";
 import Createride from "./components/Createride";
 import Chat1 from "./components/Chat";
 import OwnerChats from "./components/OwnerChats";
-
+import ProtectedRoute from "./components/ProtectedRoute";
 import NotificationBell from "./components/NotificationBell";
 import ForgotPassword from "./components/ForgotPassword";
 import { Toaster } from "react-hot-toast";
@@ -23,6 +23,18 @@ import { HiOutlineUserCircle } from "react-icons/hi2";
 import Profile from "./components/Profile";
 import JoinedRides from "./components/JoinedRides";
 import Owneravail from "./components/Owneravail";
+
+function NotFound() {
+  return (
+    <div
+      className="not-found-page"
+      style={{ padding: "2rem", textAlign: "center" }}
+    >
+      <h1>404 — Page Not Found</h1>
+      <p>The page you're looking for does not exist.</p>
+    </div>
+  );
+}
 
 export default function App() {
   const location = useLocation();
@@ -38,7 +50,6 @@ export default function App() {
   } = useNotifications(userId);
 
   const shouldShowNav = Boolean(userId) && location.pathname !== "/";
-  const shouldShowProfileIcon = shouldShowNav;
 
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -46,7 +57,17 @@ export default function App() {
 
   return (
     <div>
-      <Toaster />
+      <Toaster
+        toastOptions={{
+          duration: 5000,
+          success: {
+            duration: 5000,
+          },
+          error: {
+            duration: 5000,
+          },
+        }}
+      />
 
       {shouldShowNav && (
         <header className="app-header">
@@ -120,7 +141,7 @@ export default function App() {
               setUnreadCount={setUnreadCount}
             />
 
-            {shouldShowProfileIcon && (
+            {shouldShowNav && (
               <button
                 className="profile-icon-button"
                 onClick={() => navigate(`/profile/${userId}`)}
@@ -136,19 +157,85 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
 
-        <Route path="/rides" element={<Rides />} />
+        <Route
+          path="/rides"
+          element={
+            <ProtectedRoute>
+              <Rides />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/createride"
+          element={
+            <ProtectedRoute>
+              <Createride />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/createride" element={<Createride />} />
+        <Route
+          path="/:id1/edit"
+          element={
+            <ProtectedRoute>
+              <Createride />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/:id1/edit" element={<Createride />} />
+        <Route
+          path="/chat/:id"
+          element={
+            <ProtectedRoute>
+              <Chat1 />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/chat/:id" element={<Chat1 />} />
+        <Route
+          path="/ownerchats/:rideId"
+          element={
+            <ProtectedRoute>
+              <OwnerChats />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/ownerchats/:rideId" element={<OwnerChats />} />
-        <Route path="/ownerride" element={<Owneravail />} />
-        <Route path="/joinedrides" element={<JoinedRides />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/profile/:profileId" element={<Profile />} />
+        <Route
+          path="/ownerride"
+          element={
+            <ProtectedRoute>
+              <Owneravail />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/joinedrides"
+          element={
+            <ProtectedRoute>
+              <JoinedRides />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/profile/:profileId"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/forgot-password"
+          element={
+            <ProtectedRoute>
+              <ForgotPassword />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </div>
   );

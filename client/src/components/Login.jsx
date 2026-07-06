@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
+import toast from "react-hot-toast";
 export default function Login({ setIslogin }) {
   const [error, setError] = useState("");
   const [email, setEmail] = useState("");
@@ -19,16 +20,16 @@ export default function Login({ setIslogin }) {
         credentials: "include",
       });
       const data = await res.json();
-      console.log("data", data);
       if (res.ok) {
         localStorage.setItem("userId", data.user.id);
         window.dispatchEvent(new Event("cabmate-auth-change"));
+        toast.success(data.message || "Login successful");
         navigate("/rides");
       } else {
-        alert(data.message);
+        toast.error(data.message);
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
     }
   };
   const handleGoogleLogin = async (credentialResponse) => {
@@ -49,12 +50,13 @@ export default function Login({ setIslogin }) {
       if (res.ok) {
         localStorage.setItem("userId", data.user.id);
         window.dispatchEvent(new Event("cabmate-auth-change"));
+        toast.success(data.message || "Login successful");
         navigate("/rides");
       } else {
-        alert(data.message);
+        toast.error(data.message);
       }
     } catch (err) {
-      console.log(err);
+      console.error("[GoogleLogin]", err);
     }
   };
   return (
@@ -64,7 +66,7 @@ export default function Login({ setIslogin }) {
         <GoogleLogin
           onSuccess={handleGoogleLogin}
           onError={() => {
-            console.log("Google Login Failed");
+            console.error("Google Login Failed");
           }}
         />
         <label htmlFor="email" className="teco1">
