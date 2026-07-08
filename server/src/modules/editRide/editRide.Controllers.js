@@ -18,6 +18,8 @@ async function editRide(req, res) {
       });
     }
 
+    const { from, to, cost, vacantseat } = req.body;
+
     const allowedFields = [
       "from",
       "to",
@@ -56,7 +58,10 @@ async function editRide(req, res) {
 
     await ride.save();
 
-    return res.status(200).json(ride);
+    return res.status(200).json({
+      message: "Ride updated successfully",
+      ride,
+    });
   } catch (err) {
     console.error(err);
 

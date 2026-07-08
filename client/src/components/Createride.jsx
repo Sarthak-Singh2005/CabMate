@@ -1,7 +1,6 @@
-import React from "react";
 import { useState, useEffect } from "react";
 import "../index.css";
-import { API_BASE_URL } from "../config/api"
+import { API_BASE_URL } from "../config/api";
 import { useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 export default function Createride() {
@@ -15,10 +14,12 @@ export default function Createride() {
   const [vacantseat, setVacantseat] = useState("");
   const [cost, setCost] = useState("");
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
   const { id1 } = useParams();
   const isEdit = Boolean(id1);
   const handlecreateride = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const res = await fetch(
         isEdit
@@ -52,6 +53,8 @@ export default function Createride() {
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -59,13 +62,10 @@ export default function Createride() {
     const fetchRide = async () => {
       if (!isEdit) return;
       try {
-        const res = await fetch(
-          `${API_BASE_URL}/api/rides/fetchedit/${id1}`,
-          {
-            method: "GET",
-            credentials: "include",
-          },
-        );
+        const res = await fetch(`${API_BASE_URL}/api/rides/fetchedit/${id1}`, {
+          method: "GET",
+          credentials: "include",
+        });
 
         const data = await res.json();
         if (res.ok) {
@@ -124,6 +124,17 @@ export default function Createride() {
           </div>
           <div className="form-field">
             <label htmlFor="name">
+              Travel Date<span style={{ color: "red" }}>*</span>
+            </label>
+            <input
+              id="date"
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </div>
+          <div className="form-field">
+            <label htmlFor="name">
               Departure Time<span style={{ color: "red" }}>*</span>
             </label>
             <input
@@ -136,34 +147,23 @@ export default function Createride() {
           </div>
           <div className="form-field">
             <label htmlFor="vacantseat">
-              Available Seats<span style={{ color: "red" }}>*</span>
+              Seats Available<span style={{ color: "red" }}>*</span>
             </label>
             <input
               id="vacantseat"
               type="number"
               min="1"
-              placeholder="Enter available seats"
+              placeholder="e.g. 2"
               value={vacantseat}
               onChange={(e) => setVacantseat(e.target.value)}
             />
           </div>
           <div className="form-field">
             <label htmlFor="name">
-              Date<span style={{ color: "red" }}>*</span>
+              Fare per Seat (₹)<span style={{ color: "red" }}>*</span>
             </label>
             <input
-              id="date"
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-            />
-          </div>
-          <div className="form-field">
-            <label htmlFor="name">
-              Cost(₹)<span style={{ color: "red" }}>*</span>
-            </label>
-            <input
-              placeholder="Appoximate Cost per person"
+              placeholder="Appox. cost per person e.g. 150"
               type="number"
               min="0"
               id="cost"
@@ -177,7 +177,7 @@ export default function Createride() {
             </label>
             <input
               id="vehiclename"
-              placeholder="eg Maruti Suzuki Wagon R,Innova,etc"
+              placeholder="e.g. Maruti Suzuki, Innova, yet not decided"
               value={vehiclename}
               onChange={(e) => setVehiclename(e.target.value)}
             />
@@ -197,14 +197,20 @@ export default function Createride() {
             <textarea
               id="message"
               name="message"
-              placeholder="Add more trip details"
+              placeholder="Any additional information for passengers"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             ></textarea>
           </div>
 
           <button className="createbutton" type="submit">
-            {isEdit ? "Save" : "Post"}
+            {loading
+              ? (isEdit
+                ? "Saving...."
+                : "Creating....")
+              : (isEdit
+                ? "Save"
+                : "Create")}
           </button>
         </form>
       </div>

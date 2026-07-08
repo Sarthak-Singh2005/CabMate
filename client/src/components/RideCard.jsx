@@ -1,72 +1,56 @@
-import React from "react";
+export default function RideCard({ ride, actions, highlighted = false }) {
+  const formattedDate = new Date(ride.date).toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 
-export default function RideCard({
-  user,
-  onBook,
-  onChat,
-}) {
+  const status = ride.status?.toLowerCase();
+
+  let statusText = "🟢 ACTIVE";
+
+  if (status === "cancelled") {
+    statusText = "🔴 CANCELLED";
+  } else if (status === "full") {
+    statusText = "🟠 FULL";
+  }
+
   return (
-    <div className="avail-ride-card">
+    <div
+      id={`chat-source-${ride._id}`}
+      className={`avail-ride-card ${highlighted ? "chat-source-highlight" : ""}`}
+    >
       <div className="avail-ride-card1">
-        <h1>From: {user.from}</h1>
+        <h1>Pickup Location: {ride.from}</h1>
 
-        <h1>To: {user.to}</h1>
+        <h1>Destination: {ride.to}</h1>
 
-        <h1>
-          Date:{" "}
-          {new Date(user.date).toLocaleDateString("en-IN", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })}
-        </h1>
+        <h1>Travel Date: {formattedDate}</h1>
 
-        <h1>Time: {user.time}</h1>
+        <h1>Departure Time: {ride.time}</h1>
 
-        <h1>Vacant Seat: {user.vacantseat}</h1>
+        <h1>Seat Available: {ride.vacantseat}</h1>
 
-        <h1>Vehicle Name: {user.vehiclename}</h1>
+        <h1>Vehicle Name: {ride.vehiclename}</h1>
 
-        {user.phoneno?.length > 0 && <h1>{user.phoneno}</h1>}
+        {ride.phoneno && <h1>Phone: {ride.phoneno}</h1>}
 
-        <h1>Cost: ₹{user.cost}</h1>
+        <h1>Cost: ₹{ride.cost}</h1>
 
         <h1>
-          <span className={`status-pill ${user.status?.toLowerCase()}`}>
-            {user.status === "Cancelled" && "🔴 CANCELLED"}
-            {user.status === "Full" && "🟠 FULL"}
-            {user.status !== "Cancelled" &&
-              user.status !== "Full" &&
-              "🟢 ACTIVE"}
-          </span>
+          <span className={`status-pill ${status}`}>{statusText}</span>
         </h1>
       </div>
 
-      <div className="avail-ride-card2">
-        {user.message?.length > 0 && (
+      {ride.message && (
+        <div className="avail-ride-card2">
           <div className="additional">
-            <h1>Additional Message: {user.message}</h1>
+            <h1>Additional Note: {ride.message}</h1>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {onBook &&
-        user.status !== "Cancelled" &&
-        user.status !== "Full" && (
-          <button
-            className="book-button"
-            onClick={() => onBook(user._id)}
-          >
-            Book
-          </button>
-        )}
-
-      <button
-        className="book-button"
-        onClick={() => onChat(user._id)}
-      >
-        Chat
-      </button>
+      {actions && <div className="ride-card-actions">{actions}</div>}
     </div>
   );
 }

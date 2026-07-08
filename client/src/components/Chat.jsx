@@ -1,14 +1,16 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { API_BASE_URL } from "../config/api";
-import { useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { socket } from "../socket";
 
 export default function Chat() {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const location = useLocation();
   const [text, setText] = useState("");
   const [messages, setMessages] = useState([]);
   const [currentUser, setCurrentUser] = useState("");
-  const [owner, setOwner] = useState(false);
+  const [loading, setLoading] = useState(false);
   const fetchMessages = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/chat/messages/${id}`, {
@@ -34,11 +36,12 @@ export default function Chat() {
     };
 
     socket.on("chat:message", handleIncoming);
-    return () => socket.off("notification", handleIncoming);
+    return () => socket.off("chat:message", handleIncoming);
   }, [id]);
 
   const sendMessage = async () => {
     try {
+      setLoading(true);
       if (text.trim() === "") {
         return;
       }
@@ -58,11 +61,44 @@ export default function Chat() {
       setText("");
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
+
+  const handleBack = () => {
+    const chatSource = location.state?.chatSource;
+
+    if (chatSource?.pathname) {
+      navigate(
+        `${chatSource.pathname}${chatSource.search || ""}${chatSource.hash || ""}`,
+        {
+          state: {
+            ...chatSource.returnState,
+            highlightChatSourceId: chatSource.highlightId,
+            highlightChatSourceType: chatSource.highlightType,
+            activeTab: chatSource.activeTab,
+          },
+        },
+      );
+      return;
+    }
+
+    navigate(-1);
+  };
+
   return (
     <div className="chat-page">
-      <div className="chat-header">CabMate Chat</div>
+      <div className="chat-top">
+        <button className="btnform" onClick={handleBack}>
+          Back
+        </button>
+        <h1 className="chat-header">CabMate Chat</h1>
+        <p>
+          (These conversations are private and can only be seen and accessed by
+          you and the other participant.)
+        </p>
+      </div>
       <div className="chat-box">
         {messages.map((msg) => {
           return (
@@ -86,7 +122,9 @@ export default function Chat() {
           onChange={(e) => setText(e.target.value)}
           placeholder="Type message..."
         />
-        <button onClick={sendMessage}>Send</button>
+        <button disabled={loading} onClick={sendMessage}>
+          {loading ? "Sending...." : "Send"}
+        </button>
       </div>
     </div>
   );

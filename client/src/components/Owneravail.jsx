@@ -1,15 +1,16 @@
-import React from "react";
-import { useEffect } from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+
+import { useNavigate} from "react-router-dom";
 import "../index.css";
-import { useNavigate, useParams } from "react-router-dom";
+import RideCard from "./RideCard";
 import { API_BASE_URL } from "../config/api";
 export default function Owneravail() {
-  const [ownride, setOwnride] = useState([]);
+  const [ownride, setOwnerRide] = useState([]);
   const [message, setMessage] = useState("");
   const [activeTab, setActiveTab] = useState("upcoming");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const ownerride = async () => {
+  const fetchOwnerRides = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/rides/owner`, {
         method: "GET",
@@ -18,10 +19,10 @@ export default function Owneravail() {
       const data = await res.json();
 
       if (Array.isArray(data)) {
-        setOwnride(data);
+       setOwnerRide(data);
       } else if (data.message) {
         setMessage(data.message);
-        setOwnride([]);
+       setOwnerRide([]);
       }
     } catch (err) {
       console.error(err);
@@ -29,6 +30,7 @@ export default function Owneravail() {
   };
   const cancelRide = async (rideId) => {
     try {
+      setLoading(true);
       const res = await fetch(
         `${API_BASE_URL}/api/rides/owner/cancel/${rideId}`,
         {
@@ -42,12 +44,13 @@ export default function Owneravail() {
           credentials: "include",
         },
       );
-      const data = await res.json();
       if (res.ok) {
-        ownerride();
+        fetchOwnerRides();
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -79,74 +82,42 @@ export default function Owneravail() {
 
   const cancelledRides = ownride.filter((ride) => ride.status === "Cancelled");
 
-  const renderRideCard = (user) => (
-    <div className="avail-ride-card" key={user._id}>
-      <div className="avail-ride-card1">
-        <h1>From: {user.from}</h1>
-        <h1>To: {user.to}</h1>
-        <h1>
-          Date:
-          {new Date(user.date).toLocaleDateString("en-IN", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-          })}
-        </h1>
-        <h1>Time: {user.time}</h1>
-        <h1>Vacant Seat: {user.vacantseat}</h1>
-        <h1>Vehicle Name: {user.vehiclename}</h1>
+  const renderRide = (ride) => (
+    <RideCard
+      key={ride._id}
+      ride={ride}
+      actions={
+        <>
+          <button
+            className="book-button"
+            onClick={() => navigate(`/ownerchats/${ride._id}`)}
+          >
+            Requests & Chats
+          </button>
 
-        {user.phoneno?.length > 0 && <h1>{user.phoneno}</h1>}
-        <h1>Cost: {user.cost}</h1>
-        <h1>
-          {(() => {
-            const s = (user.status || "").toString().trim().toLowerCase();
-            let cls = "active";
-            let text = "🟢 ACTIVE";
-            if (s === "cancelled" || s === "canceled") {
-              cls = "cancelled";
-              text = "🔴 CANCELLED";
-            } else if (s === "full") {
-              cls = "full";
-              text = "🟠 FULL";
-            }
-            return <span className={`status-pill ${cls}`}>{text}</span>;
-          })()}
-        </h1>
-      </div>
+          <button
+            className="book-button"
+            onClick={() => navigate(`/${ride._id}/edit`)}
+          >
+            Edit
+          </button>
 
-      <div className="avail-ride-card2">
-        {user.message?.length > 0 && (
-          <div className="additional">
-            <h1>Additional Message: {user.message}</h1>
-          </div>
-        )}
-      </div>
-      <button
-        className="book-button"
-        onClick={() => navigate(`/ownerchats/${user._id}`)}
-      >
-        Requests & Chats
-      </button>
-      <button
-        className="book-button"
-        onClick={() => navigate(`/${user._id}/edit`)}
-      >
-        Edit
-      </button>
-      {user.status !== "Cancelled" && (
-        <button
-          className="book-button"
-          onClick={() => cancelRide(`${user._id}`)}
-        >
-          Cancel
-        </button>
-      )}
-    </div>
+          {ride.status !== "Cancelled" && (
+            <button
+              className="book-button"
+              disabled={loading}
+              onClick={() => cancelRide(ride._id)}
+            >
+              {loading ? "Cancelling..." : "Cancel"}
+            </button>
+          )}
+        </>
+      }
+    />
   );
 
   useEffect(() => {
-    ownerride();
+    fetchOwnerRides();
   }, []);
 
   return (
@@ -195,19 +166,19 @@ export default function Owneravail() {
           </div>
           {activeTab === "upcoming" &&
             (upcomingRides.length > 0 ? (
-              upcomingRides.map((ride) => renderRideCard(ride))
+              upcomingRides.map(renderRide)
             ) : (
               <p className="empty-message">No upcoming rides found.</p>
             ))}
           {activeTab === "previous" &&
             (previousRides.length > 0 ? (
-              previousRides.map((ride) => renderRideCard(ride))
+              previousRides.map(renderRide)
             ) : (
               <p className="empty-message">No previous rides found.</p>
             ))}
           {activeTab === "cancelled" &&
             (cancelledRides.length > 0 ? (
-              cancelledRides.map((ride) => renderRideCard(ride))
+              cancelledRides.map(renderRide)
             ) : (
               <p className="empty-message">No cancelled rides found.</p>
             ))}

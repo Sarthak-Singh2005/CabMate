@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { API_BASE_URL } from "../config/api";
 import toast from "react-hot-toast";
@@ -7,10 +7,13 @@ export default function OwnerChats() {
   const { rideId } = useParams();
   const [message, setMessage] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
   const [conversations, setConversations] = useState([]);
   const [ownerId, setOwnerId] = useState("");
   const [pendingPassengers, setPendingPassengers] = useState([]);
   const [bookingRequestUsers, setBookingRequestUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [highlightedPassengerId, setHighlightedPassengerId] = useState("");
 
   const fetchChats = async () => {
     try {
@@ -64,6 +67,7 @@ export default function OwnerChats() {
 
   const acceptBooking = async (passengerId) => {
     try {
+      setLoading(true);
       const res = await fetch(
         `${API_BASE_URL}/api/rides/bookingconfirm/accept`,
         {
@@ -81,10 +85,13 @@ export default function OwnerChats() {
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
   const rejectBooking = async (passengerId) => {
     try {
+      setLoading(true);
       const res = await fetch(
         `${API_BASE_URL}/api/rides/bookingconfirm/reject`,
         {
@@ -103,17 +110,27 @@ export default function OwnerChats() {
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
   const openConversation = async (passenger) => {
     try {
-      // Conversation already exists
       if (passenger.conversationId) {
-        navigate(`/chat/${passenger.conversationId}`);
+        navigate(`/chat/${passenger.conversationId}`, {
+          state: {
+            chatSource: {
+              pathname: location.pathname,
+              search: location.search,
+              hash: location.hash,
+              highlightId: passenger._id,
+              highlightType: "owner-passenger",
+            },
+          },
+        });
         return;
       }
 
-      // Create conversation
       const res = await fetch(`${API_BASE_URL}/api/chat/conversation`, {
         method: "POST",
         credentials: "include",
@@ -130,7 +147,17 @@ export default function OwnerChats() {
       const data = await res.json();
 
       if (res.ok) {
-        navigate(`/chat/${data.conversation._id}`);
+        navigate(`/chat/${data.conversation._id}`, {
+          state: {
+            chatSource: {
+              pathname: location.pathname,
+              search: location.search,
+              hash: location.hash,
+              highlightId: passenger._id,
+              highlightType: "owner-passenger",
+            },
+          },
+        });
       } else {
         toast.error(data.message);
       }
@@ -145,6 +172,33 @@ export default function OwnerChats() {
   useEffect(() => {
     fetchBookingRequests();
   }, [rideId]);
+
+  useEffect(() => {
+    const highlightId = location.state?.highlightChatSourceId;
+
+    if (!highlightId) return;
+
+    setHighlightedPassengerId(highlightId);
+
+    const scrollTimer = setTimeout(() => {
+      document
+        .getElementById(`chat-source-${highlightId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
+
+    const clearTimer = setTimeout(() => {
+      setHighlightedPassengerId("");
+    }, 4000);
+
+    return () => {
+      clearTimeout(scrollTimer);
+      clearTimeout(clearTimer);
+    };
+  }, [
+    location.state?.highlightChatSourceId,
+    conversations.length,
+    bookingRequestUsers.length,
+  ]);
 
   return (
     <div className="owner-chat-page">
@@ -176,9 +230,16 @@ export default function OwnerChats() {
 
         const combined = Array.from(passengerMap.values());
         return combined.map((passenger) => {
-          const convId = passenger.conversationId;
           return (
-            <div key={passenger._id} className="chat-user-card">
+            <div
+              key={passenger._id}
+              id={`chat-source-${passenger._id}`}
+              className={`chat-user-card ${
+                highlightedPassengerId === passenger._id
+                  ? "chat-source-highlight"
+                  : ""
+              }`}
+            >
               <div className="avatar">
                 {passenger?.name?.charAt(0)?.toUpperCase()}
               </div>
@@ -200,13 +261,13 @@ export default function OwnerChats() {
                     className="createbutton"
                     onClick={() => acceptBooking(passenger._id)}
                   >
-                    Accept
+                    {loading ? "Accepting...." : "Accept"}
                   </button>
                   <button
                     className="createbutton"
                     onClick={() => rejectBooking(passenger._id)}
                   >
-                    Reject
+                    {loading ? "Rejecting...." : "Reject"}
                   </button>
                 </div>
               )}

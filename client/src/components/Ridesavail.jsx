@@ -1,21 +1,23 @@
-import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
 import RideCard from "./RideCard";
 import toast from "react-hot-toast";
 
 export default function Ridesavail() {
-  const [allride, setAllride] = useState([]);
-  const [message1, setMessage] = useState("");
-  const [sendreqmessage, setSendReqMessage] = useState("");
+  const [allRide, setAllRide] = useState([]);
+  const [message, setMessage] = useState("");
+  const [requestMessage, setRequestMessage] = useState("");
   const [showPopup, setShowPopup] = useState(false);
-  const [ReqConfirmPopup, setReqConfirmPopup] = useState(false);
+  const [showConfirmationPopup, setShowConfirmationPopup] = useState(false);
   const [selectedRide, setSelectedRide] = useState(null);
   const [isRequesting, setIsRequesting] = useState(false);
+  const [highlightedRideId, setHighlightedRideId] = useState("");
 
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const availride = async () => {
+  const fetchAvailableRides = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/rides/avail`, {
         method: "GET",
@@ -25,10 +27,10 @@ export default function Ridesavail() {
       const data = await res.json();
 
       if (Array.isArray(data)) {
-        setAllride(data);
+        setAllRide(data);
       } else {
         setMessage(data.message || "No rides available.");
-        setAllride([]);
+        setAllRide([]);
       }
     } catch (err) {
       console.error(err);
@@ -36,10 +38,33 @@ export default function Ridesavail() {
   };
 
   useEffect(() => {
-    availride();
+    fetchAvailableRides();
   }, []);
 
-  const chatbutton = async (rideId) => {
+  useEffect(() => {
+    const highlightId = location.state?.highlightChatSourceId;
+
+    if (!highlightId) return;
+
+    setHighlightedRideId(highlightId);
+
+    const scrollTimer = setTimeout(() => {
+      document
+        .getElementById(`chat-source-${highlightId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
+
+    const clearTimer = setTimeout(() => {
+      setHighlightedRideId("");
+    }, 4000);
+
+    return () => {
+      clearTimeout(scrollTimer);
+      clearTimeout(clearTimer);
+    };
+  }, [location.state?.highlightChatSourceId, allRide.length]);
+
+  const handleChat = async (rideId) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/chat/conversation`, {
         method: "POST",
@@ -47,15 +72,23 @@ export default function Ridesavail() {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({
-          rideId,
-        }),
+        body: JSON.stringify({ rideId }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        navigate(`/chat/${data.conversation._id}`);
+        navigate(`/chat/${data.conversation._id}`, {
+          state: {
+            chatSource: {
+              pathname: location.pathname,
+              search: location.search,
+              hash: location.hash,
+              highlightId: rideId,
+              highlightType: "ride",
+            },
+          },
+        });
       } else {
         toast.error(data.message);
       }
@@ -64,18 +97,18 @@ export default function Ridesavail() {
     }
   };
 
-  const openBookingPopup = (rideId) => {
+  const handleBook = (rideId) => {
     setSelectedRide(rideId);
     setShowPopup(true);
   };
 
-  const closeBookingPopup = () => {
+  const handleClosePopup = () => {
     setShowPopup(false);
-    setReqConfirmPopup(false);
+    setShowConfirmationPopup(false);
     setSelectedRide(null);
   };
 
-  const requestBooking = async () => {
+  const handleBookingRequest = async () => {
     if (!selectedRide || isRequesting) return;
 
     setIsRequesting(true);
@@ -95,31 +128,50 @@ export default function Ridesavail() {
 
       const data = await res.json();
 
-      setSendReqMessage(data.message);
+      setRequestMessage(data.message);
 
-      closeBookingPopup();
+      handleClosePopup();
 
-      setReqConfirmPopup(true);
+      setShowConfirmationPopup(true);
     } catch (err) {
       console.error(err);
     } finally {
       setIsRequesting(false);
     }
   };
+
   return (
     <div>
-      <h1 className="section-heading1">Available Rides</h1>
+      <section className="ride-group">
+        <h1 className="section-heading1">Available Rides</h1>
+        {message && <h2 className="empty-message">{message}</h2>}
+        {allRide.map((ride) => (
+          <RideCard
+            key={ride._id}
+            ride={ride}
+            highlighted={highlightedRideId === ride._id}
+            actions={
+              <>
+                {ride.status !== "Cancelled" && ride.status !== "Full" && (
+                  <button
+                    className="book-button"
+                    onClick={() => handleBook(ride._id)}
+                  >
+                    Book
+                  </button>
+                )}
 
-      {message1 && <h2 className="empty-message">{message1}</h2>}
-
-      {allride.map((user) => (
-        <RideCard
-          key={user._id}
-          user={user}
-          onBook={openBookingPopup}
-          onChat={chatbutton}
-        />
-      ))}
+                <button
+                  className="book-button"
+                  onClick={() => handleChat(ride._id)}
+                >
+                  Chat
+                </button>
+              </>
+            }
+          />
+        ))}
+      </section>
 
       {showPopup && (
         <div className="popup">
@@ -131,14 +183,14 @@ export default function Ridesavail() {
             <div className="popup-buttons">
               <button
                 className="popup-btn cancel-btn"
-                onClick={closeBookingPopup}
+                onClick={handleClosePopup}
               >
                 Cancel
               </button>
 
               <button
                 className="popup-btn confirm-btn"
-                onClick={requestBooking}
+                onClick={handleBookingRequest}
                 disabled={isRequesting}
               >
                 {isRequesting ? "Booking..." : "Book Ride"}
@@ -148,15 +200,15 @@ export default function Ridesavail() {
         </div>
       )}
 
-      {ReqConfirmPopup && (
+      {showConfirmationPopup && (
         <div className="popup">
           <div className="popup-container">
-            <h2>{sendreqmessage}</h2>
+            <h2>{requestMessage}</h2>
 
             <div className="popup-buttons">
               <button
                 className="popup-btn cancel-btn"
-                onClick={closeBookingPopup}
+                onClick={handleClosePopup}
               >
                 OK
               </button>

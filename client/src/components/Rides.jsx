@@ -1,10 +1,8 @@
-import React, { useState, useEffect } from "react";
-import { FaSearch } from "react-icons/fa";
+import { useState, useEffect } from "react";
 import "../index.css";
 import Searchride from "./Searchride";
 import Ridesavail from "./Ridesavail";
-import { useNavigate, useParams } from "react-router-dom";
-import Owneravail from "./Owneravail";
+import { useLocation } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
 export default function Rides() {
   const [to, setTo] = useState("");
@@ -14,7 +12,14 @@ export default function Rides() {
   const [popup, setPopup] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (Array.isArray(location.state?.restoredSearchResults)) {
+      setResults(location.state.restoredSearchResults);
+    }
+  }, [location.state?.restoredSearchResults]);
+
   const search = async (e) => {
     e.preventDefault();
     try {
@@ -51,14 +56,16 @@ export default function Rides() {
       setLoading(false);
     }
   };
-  const handlebutton = (e) => {
+  const clearFilters = (e) => {
     e.preventDefault();
-    navigate("/createride");
+    setFrom("");
+    setTo("");
+    setDate("");
+    setResults([]);
+    setPopup("");
+    setLoading(false);
   };
-  const handlerideButton = (e) => {
-    e.preventDefault();
-    navigate(`/ownerride`);
-  };
+
   return (
     <div className="rides">
       <div className="search-ride-card">
@@ -70,6 +77,7 @@ export default function Rides() {
             </label>
 
             <input
+              value={from}
               onChange={(e) => setFrom(e.target.value)}
               className="searchBar"
               id="from"
@@ -84,6 +92,7 @@ export default function Rides() {
             </label>
 
             <input
+              value={to}
               onChange={(e) => setTo(e.target.value)}
               className="searchBar"
               id="to"
@@ -98,6 +107,7 @@ export default function Rides() {
             </label>
 
             <input
+              value={date}
               onChange={(e) => setDate(e.target.value)}
               className="searchBar"
               id="date"
@@ -105,15 +115,24 @@ export default function Rides() {
             />
           </div>
 
-          <button type="submit" className="searchButton">
-            <FaSearch size={40} />
-          </button>
+          <div className="action-buttons">
+            <button type="submit" className="searchButton">
+              Search Rides
+            </button>
+            <button
+              type="button"
+              className="clearButton"
+              onClick={clearFilters}
+            >
+              Clear Filters
+            </button>
+          </div>
         </form>
       </div>
 
       {popup && <div className="popup-message">{popup}</div>}
 
-      {loading && <h1 className="loading">Searching...</h1>}
+      {loading && <h1 className="loading">Searching.....</h1>}
 
       {results.length > 0 ? <Searchride searcharr={results} /> : <Ridesavail />}
     </div>

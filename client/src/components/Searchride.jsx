@@ -1,19 +1,21 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
 import RideCard from "./RideCard";
 import toast from "react-hot-toast";
 
 export default function Searchride({ searcharr }) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [showPopup, setShowPopup] = useState(false);
   const [selectedRide, setSelectedRide] = useState(null);
-  const [sendreqmessage, setSendReqMessage] = useState("");
-  const [ReqConfirmPopup, setReqConfirmPopup] = useState(false);
+  const [requestMessage, setRequestMessage] = useState("");
+  const [showConfirmationPopup, setShowConfirmationPopup] = useState(false);
   const [isRequesting, setIsRequesting] = useState(false);
+  const [highlightedRideId, setHighlightedRideId] = useState("");
 
-  const chatbutton = async (rideId) => {
+  const handleChat = async (rideId) => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/chat/conversation`, {
         method: "POST",
@@ -21,15 +23,26 @@ export default function Searchride({ searcharr }) {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({
-          rideId,
-        }),
+        body: JSON.stringify({ rideId }),
       });
 
       const data = await res.json();
 
       if (res.ok) {
-        navigate(`/chat/${data.conversation._id}`);
+        navigate(`/chat/${data.conversation._id}`, {
+          state: {
+            chatSource: {
+              pathname: location.pathname,
+              search: location.search,
+              hash: location.hash,
+              highlightId: rideId,
+              highlightType: "ride",
+              returnState: {
+                restoredSearchResults: searcharr,
+              },
+            },
+          },
+        });
       } else {
         toast.error(data.message);
       }
@@ -38,18 +51,41 @@ export default function Searchride({ searcharr }) {
     }
   };
 
-  const openBookingPopup = (rideId) => {
+  useEffect(() => {
+    const highlightId = location.state?.highlightChatSourceId;
+
+    if (!highlightId) return;
+
+    setHighlightedRideId(highlightId);
+
+    const scrollTimer = setTimeout(() => {
+      document
+        .getElementById(`chat-source-${highlightId}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
+
+    const clearTimer = setTimeout(() => {
+      setHighlightedRideId("");
+    }, 4000);
+
+    return () => {
+      clearTimeout(scrollTimer);
+      clearTimeout(clearTimer);
+    };
+  }, [location.state?.highlightChatSourceId, searcharr.length]);
+
+  const handleBook = (rideId) => {
     setSelectedRide(rideId);
     setShowPopup(true);
   };
 
-  const closeBookingPopup = () => {
+  const handleClosePopup = () => {
     setShowPopup(false);
-    setReqConfirmPopup(false);
+    setShowConfirmationPopup(false);
     setSelectedRide(null);
   };
 
-  const requestBooking = async () => {
+  const handleBookingRequest = async () => {
     if (!selectedRide || isRequesting) return;
 
     setIsRequesting(true);
@@ -69,11 +105,11 @@ export default function Searchride({ searcharr }) {
 
       const data = await res.json();
 
-      setSendReqMessage(data.message);
+      setRequestMessage(data.message);
 
-      closeBookingPopup();
+      handleClosePopup();
 
-      setReqConfirmPopup(true);
+      setShowConfirmationPopup(true);
     } catch (err) {
       console.error(err);
     } finally {
@@ -82,15 +118,36 @@ export default function Searchride({ searcharr }) {
   };
 
   return (
-    <div>
-      {searcharr.map((user) => (
-        <RideCard
-          key={user._id}
-          user={user}
-          onBook={openBookingPopup}
-          onChat={chatbutton}
-        />
-      ))}
+    <div className="rides">
+      <section className="ride-group">
+        <h1 className="section-heading1">Available Rides based on Filters</h1>
+        {searcharr.map((ride) => (
+          <RideCard
+            key={ride._id}
+            ride={ride}
+            highlighted={highlightedRideId === ride._id}
+            actions={
+              <>
+                {ride.status !== "Cancelled" && ride.status !== "Full" && (
+                  <button
+                    className="book-button"
+                    onClick={() => handleBook(ride._id)}
+                  >
+                    Book
+                  </button>
+                )}
+
+                <button
+                  className="book-button"
+                  onClick={() => handleChat(ride._id)}
+                >
+                  Chat
+                </button>
+              </>
+            }
+          />
+        ))}
+      </section>
 
       {showPopup && (
         <div className="popup">
@@ -102,14 +159,14 @@ export default function Searchride({ searcharr }) {
             <div className="popup-buttons">
               <button
                 className="popup-btn cancel-btn"
-                onClick={closeBookingPopup}
+                onClick={handleClosePopup}
               >
                 Cancel
               </button>
 
               <button
                 className="popup-btn confirm-btn"
-                onClick={requestBooking}
+                onClick={handleBookingRequest}
                 disabled={isRequesting}
               >
                 {isRequesting ? "Booking..." : "Book Ride"}
@@ -119,15 +176,15 @@ export default function Searchride({ searcharr }) {
         </div>
       )}
 
-      {ReqConfirmPopup && (
+      {showConfirmationPopup && (
         <div className="popup">
           <div className="popup-container">
-            <h2>{sendreqmessage}</h2>
+            <h2>{requestMessage}</h2>
 
             <div className="popup-buttons">
               <button
                 className="popup-btn cancel-btn"
-                onClick={closeBookingPopup}
+                onClick={handleClosePopup}
               >
                 OK
               </button>
