@@ -10,6 +10,8 @@ async function availRide(req, res) {
         vacantseat: { $gt: 0 },
         status: "Available",
       })
+      .select("-phoneno")
+      .populate("createdBy", "name gender")
       .sort({ createdAt: -1 });
 
     if (availrides.length > 0) {
@@ -29,6 +31,8 @@ async function ownerRide(req, res) {
   try {
     const ownerrides = await createrideModel
       .find({ createdBy: req.user.id })
+      .select("-phoneno")
+      .populate("createdBy", "name gender")
       .sort({ createdAt: -1 });
 
     if (ownerrides.length > 0) {

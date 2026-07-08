@@ -13,6 +13,10 @@ const userModel = new mongoose.Schema(
       type: String,
       required: true,
     },
+    gender: {
+      type: String,
+      enum: ["Male", "Female"],
+    },
 
     googleId: {
       type: String,

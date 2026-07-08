@@ -83,7 +83,7 @@ async function getJoinedRides(req, res) {
         "bookingRequests.user": userId,
         "bookingRequests.status": "accepted",
       })
-      .populate("createdBy", "name email");
+      .populate("createdBy", "name email gender");
 
     return res.status(200).json({ rides: joinedRides });
   } catch (error) {

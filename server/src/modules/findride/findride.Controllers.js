@@ -20,6 +20,8 @@ async function findride(req, res) {
         vacantseat: { $gt: 0 },
         status: "Available",
       })
+      .select("-phoneno")
+      .populate("createdBy", "name gender")
       .sort({ createdAt: -1 });
 
     if (availrides.length > 0) {

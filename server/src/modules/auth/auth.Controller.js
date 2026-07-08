@@ -61,7 +61,7 @@ async function loginUserController(req, res) {
 }
 async function registerUserController(req, res) {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, name, gender } = req.body;
     if (!email) {
       return res.status(400).json({
         message: "Please provide email",
@@ -73,6 +73,14 @@ async function registerUserController(req, res) {
     } else if (!name) {
       return res.status(400).json({
         message: "Please provide name",
+      });
+    } else if (!gender) {
+      return res.status(400).json({
+        message: "Please select gender",
+      });
+    } else if (!["Male", "Female"].includes(gender)) {
+      return res.status(400).json({
+        message: "Please select a valid gender",
       });
     }
     const isUserAlreadyExists = await userModel.findOne({ email });
@@ -86,6 +94,7 @@ async function registerUserController(req, res) {
       email,
       password: hash,
       name,
+      gender,
     });
     const token = jwt.sign(
       { id: user._id, name: user.name },
@@ -103,6 +112,7 @@ async function registerUserController(req, res) {
       user: {
         id: user._id,
         email: user.email,
+        gender: user.gender,
       },
     });
   } catch (err) {
