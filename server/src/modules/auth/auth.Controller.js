@@ -1,37 +1,49 @@
 const userModel = require("./auth.model");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const { OAuth2Client } = require("google-auth-library");
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+function getAuthCookieOptions() {
+  const isProduction = process.env.NODE_ENV === "production";
+
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+  };
+}
+
 async function loginUserController(req, res) {
   try {
-    const { email, password } = req.body;
-    if (!email) {
+    const { phone, password } = req.body;
+    const cleanedPhone = phone?.trim();
+    if (!cleanedPhone) {
       return res.status(400).json({
-        message: "Please provide email",
+        message: "Please provide phone number",
       });
     } else if (!password) {
       return res.status(400).json({
         message: "Please provide password",
       });
+    } else if (!/^[0-9]{10}$/.test(cleanedPhone)) {
+      return res.status(400).json({
+        message: "Please provide a valid 10 digit phone number",
+      });
     }
-    const user = await userModel.findOne({ email });
+    const user = await userModel.findOne({ phone: cleanedPhone });
     if (!user) {
       return res.status(400).json({
-        message: "Wrong email or password",
+        message: "Wrong phone number or password",
       });
     }
     if (!user.password) {
       return res.status(400).json({
-        message:
-          "This account was created using Google. Please continue with Google.",
+        message: "This account does not have a password login.",
       });
     }
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({
-        message: "Wrong email or password",
+        message: "Wrong phone number or password",
       });
     }
     const token = jwt.sign(
@@ -41,15 +53,12 @@ async function loginUserController(req, res) {
         expiresIn: "1d",
       },
     );
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: false,
-    });
+    res.cookie("token", token, getAuthCookieOptions());
     res.status(200).json({
       message: "Login Successfully",
       user: {
         id: user._id,
-        email: user.email,
+        phone: user.phone,
         name: user.name,
       },
     });
@@ -61,10 +70,11 @@ async function loginUserController(req, res) {
 }
 async function registerUserController(req, res) {
   try {
-    const { email, password, name, gender } = req.body;
-    if (!email) {
+    const { phone, password, name, gender } = req.body;
+    const cleanedPhone = phone?.trim();
+    if (!cleanedPhone) {
       return res.status(400).json({
-        message: "Please provide email",
+        message: "Please provide phone number",
       });
     } else if (!password) {
       return res.status(400).json({
@@ -82,8 +92,14 @@ async function registerUserController(req, res) {
       return res.status(400).json({
         message: "Please select a valid gender",
       });
+    } else if (!/^[0-9]{10}$/.test(cleanedPhone)) {
+      return res.status(400).json({
+        message: "Please provide a valid 10 digit phone number",
+      });
     }
-    const isUserAlreadyExists = await userModel.findOne({ email });
+    const isUserAlreadyExists = await userModel.findOne({
+      phone: cleanedPhone,
+    });
     if (isUserAlreadyExists) {
       return res.status(400).json({
         message: "Account already exist",
@@ -91,7 +107,7 @@ async function registerUserController(req, res) {
     }
     const hash = await bcrypt.hash(password, 10);
     const user = await userModel.create({
-      email,
+      phone: cleanedPhone,
       password: hash,
       name,
       gender,
@@ -103,16 +119,14 @@ async function registerUserController(req, res) {
         expiresIn: "1d",
       },
     );
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: false,
-    });
+    res.cookie("token", token, getAuthCookieOptions());
     res.status(201).json({
       message: "User registered successfully",
       user: {
         id: user._id,
-        email: user.email,
+        phone: user.phone,
         gender: user.gender,
+        name: user.name,
       },
     });
   } catch (err) {
@@ -124,10 +138,7 @@ async function registerUserController(req, res) {
 
 async function logoutUserController(req, res) {
   try {
-    res.clearCookie("token", {
-      httpOnly: true,
-      secure: false,
-    });
+    res.clearCookie("token", getAuthCookieOptions());
 
     return res.status(200).json({
       message: "Logged out successfully",
@@ -176,96 +187,51 @@ async function changePasswordController(req, res) {
 
 async function forgotPasswordController(req, res) {
   try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ message: "Please provide email" });
+    const { phone } = req.body;
+    const cleanedPhone = phone?.trim();
+    if (!cleanedPhone) {
+      return res.status(400).json({ message: "Please provide phone number" });
     }
-    const user = await userModel.findOne({ email });
+    const user = await userModel.findOne({ phone: cleanedPhone });
     if (!user) {
-      return res.status(404).json({ message: "Email not registered" });
+      return res.status(404).json({ message: "Phone number not registered" });
     }
 
-    // NOTE: In a production app you'd generate a token and email a reset link here.
     return res.status(200).json({
-      message: "If this email is registered, a reset link will be sent.",
+      message:
+        "If this phone number is registered, password reset can continue.",
     });
   } catch (err) {
     return res.status(500).json({ message: "Server Error" });
   }
 }
-async function googleLoginController(req, res) {
+
+async function getCurrentUserController(req, res) {
   try {
-    const { credential } = req.body;
-
-    if (!credential) {
-      return res.status(400).json({
-        message: "Google credential is required",
-      });
-    }
-
-    const ticket = await client.verifyIdToken({
-      idToken: credential,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-
-    const payload = ticket.getPayload();
-    if (!payload.email_verified) {
-      return res.status(401).json({
-        message: "Google email is not verified",
-      });
-    }
-    const { sub, email, name } = payload;
-
-    let user = await userModel.findOne({ email });
+    const user = await userModel.findById(req.user.id).select("-password");
 
     if (!user) {
-      user = await userModel.create({
-        email,
-        name,
-        googleId: sub,
-      });
-    } else if (!user.googleId) {
-      user.googleId = sub;
-      await user.save();
+      return res.status(404).json({ message: "User not found" });
     }
 
-    const token = jwt.sign(
-      {
-        id: user._id,
-        name: user.name,
-      },
-      process.env.JWT_SECRET,
-      {
-        expiresIn: "1d",
-      },
-    );
-
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: false,
-    });
-
     return res.status(200).json({
-      message: "Google login successful",
       user: {
         id: user._id,
-        email: user.email,
+        phone: user.phone,
+        gender: user.gender,
         name: user.name,
       },
     });
   } catch (err) {
-    console.error(err);
-
-    return res.status(500).json({
-      message: "Google Login Failed",
-    });
+    return res.status(500).json({ message: "Server Error" });
   }
 }
+
 module.exports = {
   loginUserController,
   registerUserController,
   logoutUserController,
   changePasswordController,
   forgotPasswordController,
-  googleLoginController,
+  getCurrentUserController,
 };

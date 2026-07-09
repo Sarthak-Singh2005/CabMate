@@ -64,7 +64,7 @@ async function getRideChats(req, res) {
 
     const conversations = await Conversation.find({
       rideId,
-    }).populate("participants", "name email");
+    }).populate("participants", "name phone");
     if (conversations.length === 0) {
       return res.status(200).json({
         message: "No one have messaged you",

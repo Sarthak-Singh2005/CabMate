@@ -4,14 +4,19 @@ const { getIo } = require("../../socket");
 const { sendNotification } = require("../notifications/notification.service");
 async function availRide(req, res) {
   try {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
     const availrides = await createrideModel
       .find({
         createdBy: { $ne: req.user.id },
+        date: { $gte: todayStart },
         vacantseat: { $gt: 0 },
         status: "Available",
       })
       .select("-phoneno")
       .populate("createdBy", "name gender")
+      .populate("bookingRequests.user", "gender")
       .sort({ createdAt: -1 });
 
     if (availrides.length > 0) {
@@ -33,6 +38,7 @@ async function ownerRide(req, res) {
       .find({ createdBy: req.user.id })
       .select("-phoneno")
       .populate("createdBy", "name gender")
+      .populate("bookingRequests.user", "gender")
       .sort({ createdAt: -1 });
 
     if (ownerrides.length > 0) {
@@ -54,11 +60,28 @@ async function reqRide(req, res) {
     if (!bookingreq || !rideId) {
       return res.status(400).json({ message: "Missing bookingreq or rideId" });
     }
-    const ride = await createrideModel.findById(rideId).select("createdBy");
+    const ride = await createrideModel
+      .findById(rideId)
+      .select("createdBy date status vacantseat");
 
     if (!ride) {
       return res.status(404).json({
         message: "Ride not found",
+      });
+    }
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const rideDate = new Date(ride.date);
+    rideDate.setHours(0, 0, 0, 0);
+
+    if (
+      ride.status !== "Available" ||
+      Number(ride.vacantseat) <= 0 ||
+      rideDate < todayStart
+    ) {
+      return res.status(400).json({
+        message: "This ride is no longer available",
       });
     }
 
@@ -70,6 +93,8 @@ async function reqRide(req, res) {
     const updatedRide = await createrideModel.findOneAndUpdate(
       {
         _id: rideId,
+        status: "Available",
+        vacantseat: { $gt: 0 },
         "bookingRequests.user": { $ne: req.user.id },
       },
       {
@@ -123,6 +148,7 @@ async function reqRide(req, res) {
         type: "booking_request",
         message: notificationMessage,
         ride: rideId,
+        passenger: req.user.id,
       });
     }
 
@@ -150,7 +176,7 @@ async function getBookingRequests(req, res) {
 
     const ride = await createrideModel
       .findById(rideId)
-      .populate("bookingRequests.user", "name");
+      .populate("bookingRequests.user", "name gender"); // <-- add gender
     if (!ride) return res.status(404).json({ message: "Ride not found" });
     if (ride.createdBy.toString() !== req.user.id.toString()) {
       return res.status(403).json({
@@ -184,6 +210,8 @@ async function acceptRide(req, res) {
 
         createdBy: currentUserId,
 
+        status: "Available",
+
         vacantseat: { $gt: 0 },
 
         bookingRequests: {
@@ -213,6 +241,11 @@ async function acceptRide(req, res) {
       return res.status(400).json({
         message: "No seats available or request already processed",
       });
+    }
+
+    if (Number(updatedRide.vacantseat) === 0) {
+      updatedRide.status = "Full";
+      await updatedRide.save();
     }
 
     const owner = await userModel.findById(ownerId).select("name");

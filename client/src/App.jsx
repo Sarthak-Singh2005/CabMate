@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Link,
   NavLink,
@@ -8,14 +8,13 @@ import {
   useNavigate,
 } from "react-router-dom";
 
-import Home from "./components/Home";
+import Account from "./components/Account";
 import Rides from "./components/Rides";
 import Createride from "./components/Createride";
-import Chat1 from "./components/Chat";
+import Chat from "./components/Chat";
 import OwnerChats from "./components/OwnerChats";
 import ProtectedRoute from "./components/ProtectedRoute";
 import NotificationBell from "./components/NotificationBell";
-import ForgotPassword from "./components/ForgotPassword";
 import { Toaster } from "react-hot-toast";
 import { useCurrentUser } from "./hooks/useCurrentUser";
 import { useNotifications } from "./hooks/useNotifications";
@@ -24,8 +23,7 @@ import Profile from "./components/Profile";
 import JoinedRides from "./components/JoinedRides";
 import Owneravail from "./components/Owneravail";
 import NotFound from "./components/NotFound";
-
-
+import { MdOutlineDirectionsCar } from "react-icons/md";
 export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -41,20 +39,16 @@ export default function App() {
 
   const shouldShowNav = Boolean(userId) && location.pathname !== "/";
 
-  useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [location.pathname]);
-
   return (
     <div>
       <Toaster
         toastOptions={{
-          duration: 5000,
+          duration: 1000,
           success: {
-            duration: 5000,
+            duration: 1000,
           },
           error: {
-            duration: 5000,
+            duration: 1000,
           },
         }}
       />
@@ -62,12 +56,8 @@ export default function App() {
       {shouldShowNav && (
         <header className="app-header">
           <div className="nav-brand-row">
-            <Link
-              to="/rides"
-              className="nav-brand"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              <span className="nav-brand-icon">🛻</span>
+            <Link to="/rides" className="nav-brand">
+              <MdOutlineDirectionsCar className="nav-brand-icon" />
               <span>CabMate</span>
             </Link>
           </div>
@@ -77,37 +67,37 @@ export default function App() {
           >
             <NavLink
               to="/rides"
+              onClick={() => setMobileMenuOpen(false)}
               className={({ isActive }) =>
                 isActive ? "nav-link nav-link-active" : "nav-link"
               }
-              onClick={() => setMobileMenuOpen(false)}
             >
-              Home
+              Find Rides
             </NavLink>
             <NavLink
               to="/createride"
+              onClick={() => setMobileMenuOpen(false)}
               className={({ isActive }) =>
                 isActive ? "nav-link nav-link-active" : "nav-link"
               }
-              onClick={() => setMobileMenuOpen(false)}
             >
               Post New Ride
             </NavLink>
             <NavLink
               to="/ownerride"
+              onClick={() => setMobileMenuOpen(false)}
               className={({ isActive }) =>
                 isActive ? "nav-link nav-link-active" : "nav-link"
               }
-              onClick={() => setMobileMenuOpen(false)}
             >
-              Posted Rides
+              My Rides
             </NavLink>
             <NavLink
               to="/joinedrides"
+              onClick={() => setMobileMenuOpen(false)}
               className={({ isActive }) =>
                 isActive ? "nav-link nav-link-active" : "nav-link"
               }
-              onClick={() => setMobileMenuOpen(false)}
             >
               Joined Rides
             </NavLink>
@@ -145,7 +135,7 @@ export default function App() {
       )}
 
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<Account />} />
 
         <Route
           path="/rides"
@@ -177,7 +167,7 @@ export default function App() {
           path="/chat/:id"
           element={
             <ProtectedRoute>
-              <Chat1 />
+              <Chat />
             </ProtectedRoute>
           }
         />
@@ -214,14 +204,6 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Profile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/forgot-password"
-          element={
-            <ProtectedRoute>
-              <ForgotPassword />
             </ProtectedRoute>
           }
         />

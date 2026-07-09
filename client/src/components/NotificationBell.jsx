@@ -17,6 +17,11 @@ export default function NotificationBell({
 
   const navigate = useNavigate();
 
+  const getEntityId = (entity) => {
+    if (!entity) return "";
+    return String(entity._id || entity);
+  };
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
@@ -50,28 +55,54 @@ export default function NotificationBell({
         }
       }
 
+      const rideId = getEntityId(notification.ride);
+      const passengerId = getEntityId(notification.passenger);
+
       switch (notification.type) {
         case "booking_request":
-          if (notification.ride) {
-            navigate(`/ownerchats/${notification.ride}`);
+          if (rideId) {
+            navigate(`/ownerchats/${rideId}`, {
+              state: passengerId
+                ? { highlightChatSourceId: passengerId }
+                : undefined,
+            });
           }
           break;
 
         case "booking_accepted":
-          navigate("/joinedrides");
+          navigate("/joinedrides", {
+            state: {
+              activeTab: "upcoming",
+              highlightChatSourceId: rideId,
+            },
+          });
           break;
 
         case "booking_rejected":
-          navigate("/joinedrides");
+          navigate("/rides", {
+            state: {
+              highlightChatSourceId: rideId,
+            },
+          });
           break;
 
         case "cancelled_ride":
-          navigate("/joinedrides");
+        case "cancel_ride":
+          navigate("/joinedrides", {
+            state: {
+              activeTab: "cancelled",
+              highlightChatSourceId: rideId,
+            },
+          });
           break;
 
         case "new_message":
           if (notification.conversation) {
-            navigate(`/chat/${notification.conversation}`);
+            navigate(`/chat/${getEntityId(notification.conversation)}`, {
+              state: {
+                highlightLatestMessage: true,
+              },
+            });
           }
           break;
 

@@ -30,6 +30,8 @@ async function editRide(req, res) {
       "message",
       "vehiclename",
       "vacantseat",
+      "maletravel",
+      "femaletravel",
     ];
 
     if (from && to && from.trim().toLowerCase() === to.trim().toLowerCase()) {
@@ -55,6 +57,10 @@ async function editRide(req, res) {
         ride[field] = req.body[field];
       }
     });
+
+    if (ride.status === "Full" && Number(ride.vacantseat) > 0) {
+      ride.status = "Available";
+    }
 
     await ride.save();
 

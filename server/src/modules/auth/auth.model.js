@@ -1,13 +1,15 @@
 const mongoose = require("mongoose");
 const userModel = new mongoose.Schema(
   {
-    email: {
+    phone: {
       type: String,
       required: true,
-      unique: [true, "Already Exist with this Email Account"],
+      unique: true,
+      match: /^[0-9]{10}$/,
     },
     password: {
       type: String,
+      required: true,
     },
     name: {
       type: String,
@@ -16,10 +18,7 @@ const userModel = new mongoose.Schema(
     gender: {
       type: String,
       enum: ["Male", "Female"],
-    },
-
-    googleId: {
-      type: String,
+      required: true,
     },
   },
   { timestamps: true },

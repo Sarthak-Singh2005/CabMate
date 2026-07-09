@@ -13,7 +13,7 @@ const profileRoutes = require("./modules/profile/profile.routes");
 const app = express();
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: process.env.CLIENT_URL,
     credentials: true,
   }),
 );
@@ -31,4 +31,21 @@ app.use("/api/profile", profileRoutes);
 app.get("/", (req, res) => {
   res.send("Server Working");
 });
+
+app.use((req, res) => {
+  res.status(404).json({ message: "Route not found" });
+});
+
+app.use((err, req, res, next) => {
+  console.error(err);
+
+  const statusCode = err.statusCode || err.status || 500;
+  const message =
+    process.env.NODE_ENV === "production"
+      ? "Internal Server Error"
+      : err.message || "Internal Server Error";
+
+  res.status(statusCode).json({ message });
+});
+
 module.exports = app;

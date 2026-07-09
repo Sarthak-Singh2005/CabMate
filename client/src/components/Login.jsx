@@ -1,111 +1,92 @@
-import React, { useState } from "react";
-import { GoogleLogin } from "@react-oauth/google";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
 import toast from "react-hot-toast";
+
 export default function Login({ setIslogin }) {
-  const [error, setError] = useState("");
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ email, password }),
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (res.ok) {
-        localStorage.setItem("userId", data.user.id);
-        window.dispatchEvent(new Event("cabmate-auth-change"));
-        toast.success(data.message || "Login successful");
-        navigate("/rides");
-      } else {
-        toast.error(data.message);
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-  const handleGoogleLogin = async (credentialResponse) => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/google`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
         body: JSON.stringify({
-          credential: credentialResponse.credential,
+          phone: phone.trim(),
+          password,
         }),
+        credentials: "include",
       });
-
       const data = await res.json();
-
       if (res.ok) {
         localStorage.setItem("userId", data.user.id);
         window.dispatchEvent(new Event("cabmate-auth-change"));
         toast.success(data.message || "Login successful");
         navigate("/rides");
       } else {
-        toast.error(data.message);
+        toast.error(data.message || "Login failed");
       }
     } catch (err) {
-      console.error("[GoogleLogin]", err);
+      toast.error("Unable to connect to the server.");
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
+
   return (
     <form onSubmit={handleLogin}>
       <div className="accountform">
         <h1 className="teco">Login to CabMate</h1>
-        <GoogleLogin
-          onSuccess={handleGoogleLogin}
-          onError={() => {
-            console.error("Google Login Failed");
-          }}
-        />
-        <label htmlFor="email" className="teco1">
-          E-mail:
-        </label>
-        <input
-          type="email"
-          id="email"
-          className="teco1input"
-          placeholder="Enter Your Email"
-          onChange={(e) => setEmail(e.target.value)}
-        />
-        <label htmlFor="password" className="teco1">
-          Password
-        </label>
-        <input
-          className="teco1input"
-          onChange={(e) => setPassword(e.target.value)}
-          type="password"
-          id="password"
-          placeholder="Enter Your Password"
-        />
-        <p
-          style={{ color: "#b181ff", marginBottom: "1rem", textAlign: "right" }}
-        >
-          <span
-            onClick={() => navigate("/forgot-password")}
-            style={{
-              cursor: "pointer",
-              color: "white",
-              textDecoration: "underline",
-              display: "inline",
-            }}
-          >
-            Forgot Password?
-          </span>
-        </p>
-        <button className="btnform" type="submit">
-          Login
+        
+        <div className="auth-field">
+          <label htmlFor="phone" className="teco1">
+            Mobile Number{" "}
+            <span className="required-star" aria-hidden="true">
+              *
+            </span>
+          </label>
+          <input
+            type="tel"
+            required
+            id="phone"
+            maxLength={10}
+            placeholder=" eg 9876543211"
+            className="teco1input"
+            pattern="[0-9]{10}"
+            inputMode="numeric"
+            value={phone}
+            onChange={(e) =>
+              setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))
+            }
+          />
+        </div>
+        <div className="auth-field">
+          <label htmlFor="password" className="teco1">
+            Password{" "}
+            <span className="required-star" aria-hidden="true">
+              *
+            </span>
+          </label>
+          <input
+            className="teco1input"
+            onChange={(e) => setPassword(e.target.value)}
+            type="password"
+            id="password"
+            placeholder="Enter your password"
+            required
+            value={password}
+          />
+        </div>
+        <button className="btnform" disabled={loading} type="submit">
+          {loading ? "Logging in..." : "Login"}
         </button>
         <p style={{ color: "#b181ff" }}>
           Don't have an account?{" "}
@@ -118,7 +99,7 @@ export default function Login({ setIslogin }) {
               display: "inline",
             }}
           >
-            Sign Up
+            Register
           </span>
         </p>
       </div>

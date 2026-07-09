@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "../index.css";
 import { API_BASE_URL } from "../config/api";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import toast from "react-hot-toast";
 export default function Createride() {
   const [from, setFrom] = useState("");
@@ -13,10 +13,33 @@ export default function Createride() {
   const [vehiclename, setVehiclename] = useState("");
   const [vacantseat, setVacantseat] = useState("");
   const [cost, setCost] = useState("");
+  const [maletravel, setMaleTravel] = useState("");
+  const [femaletravel, setFemaleTravel] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
   const [loading, setLoading] = useState(false);
   const { id1 } = useParams();
   const isEdit = Boolean(id1);
+
+  const handleBack = () => {
+    const rideSource = location.state?.rideSource;
+
+    if (rideSource?.pathname) {
+      navigate(
+        `${rideSource.pathname}${rideSource.search || ""}${rideSource.hash || ""}`,
+        {
+          state: {
+            highlightChatSourceId: rideSource.highlightId,
+            activeTab: rideSource.activeTab,
+          },
+        },
+      );
+      return;
+    }
+
+    navigate(-1);
+  };
+
   const handlecreateride = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -40,6 +63,8 @@ export default function Createride() {
             message: message,
             vehiclename: vehiclename,
             vacantseat: vacantseat,
+            maletravel: maletravel,
+            femaletravel: femaletravel,
           }),
           credentials: "include",
         },
@@ -47,7 +72,20 @@ export default function Createride() {
       const data = await res.json();
       if (res.ok) {
         toast.success(data.message);
-        navigate("/rides");
+        if (isEdit && location.state?.rideSource?.pathname) {
+          const rideSource = location.state.rideSource;
+          navigate(
+            `${rideSource.pathname}${rideSource.search || ""}${rideSource.hash || ""}`,
+            {
+              state: {
+                highlightChatSourceId: rideSource.highlightId,
+                activeTab: rideSource.activeTab,
+              },
+            },
+          );
+        } else {
+          navigate("/ownerride");
+        }
       } else {
         toast.error(data.message);
       }
@@ -80,6 +118,8 @@ export default function Createride() {
           setMessage(ride.message || "");
           setVehiclename(ride.vehiclename || "");
           setVacantseat(ride.vacantseat ?? "");
+          setMaleTravel(ride.maletravel ?? "");
+          setFemaleTravel(ride.femaletravel ?? "");
         }
       } catch (err) {
         console.error(err);
@@ -92,8 +132,21 @@ export default function Createride() {
   return (
     <div className="create-ride-page">
       <div className="create-ride-card">
-        <div className="create-ride-header">
-          <h1 className="head">Share Your Ride</h1>
+        <div
+          className={`create-ride-header ${
+            isEdit ? "create-ride-header-with-back" : ""
+          }`}
+        >
+          {isEdit && (
+            <button
+              type="button"
+              className="btnform create-ride-back"
+              onClick={handleBack}
+            >
+              Back
+            </button>
+          )}
+          <h1 className="head">{isEdit ? "Edit Your Ride" : "Share Your Ride"}</h1>
           <p className="create-ride-subtitle">
             Enter your trip details so passengers can easily find and join your
             ride. Keep the info clear and complete.
@@ -102,7 +155,7 @@ export default function Createride() {
         <form className="createrideform" onSubmit={handlecreateride}>
           <div className="form-field">
             <label htmlFor="from">
-              Pickup Location<span style={{ color: "red" }}>*</span>
+              Pickup<span style={{ color: "red" }}>*</span>
             </label>
             <input
               id="from"
@@ -177,19 +230,33 @@ export default function Createride() {
             </label>
             <input
               id="vehiclename"
-              placeholder="e.g. Maruti Suzuki, Innova, yet not decided"
+              placeholder="e.g. Maruti Suzuki, Innova, not decided till now"
               value={vehiclename}
               onChange={(e) => setVehiclename(e.target.value)}
             />
           </div>
           <div className="form-field">
-            <label htmlFor="phoneno">Contact Number</label>
+            <label htmlFor="maletravel">Male Friends Already Travelling</label>
             <input
-              id="phoneno"
-              type="tel"
-              placeholder="Enter contact number"
-              value={phoneno}
-              onChange={(e) => setPhoneno(e.target.value)}
+              id="maletravel"
+              type="number"
+              min="0"
+              placeholder="e.g. 2"
+              value={maletravel}
+              onChange={(e) => setMaleTravel(e.target.value)}
+            />
+          </div>
+          <div className="form-field">
+            <label htmlFor="femaletravel">
+              Female Friends Already Travelling
+            </label>
+            <input
+              id="femaletravel"
+              type="number"
+              min="0"
+              placeholder="e.g. 2"
+              value={femaletravel}
+              onChange={(e) => setFemaleTravel(e.target.value)}
             />
           </div>
           <div className="form-field full-width">
@@ -205,12 +272,12 @@ export default function Createride() {
 
           <button className="createbutton" type="submit">
             {loading
-              ? (isEdit
+              ? isEdit
                 ? "Saving...."
-                : "Creating....")
-              : (isEdit
+                : "Creating...."
+              : isEdit
                 ? "Save"
-                : "Create")}
+                : "Create"}
           </button>
         </form>
       </div>

@@ -10,6 +10,8 @@ async function createnewride(req, res) {
     vacantseat,
     date,
     cost,
+    maletravel,
+    femaletravel
   } = req.body;
   try {
     if (
@@ -54,6 +56,8 @@ async function createnewride(req, res) {
       message,
       vehiclename,
       vacantseat,
+      femaletravel,
+      maletravel,
     });
     return res.status(201).json({
       message: "Ride created successfully",

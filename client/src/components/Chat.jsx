@@ -11,6 +11,7 @@ export default function Chat() {
   const [messages, setMessages] = useState([]);
   const [currentUser, setCurrentUser] = useState("");
   const [loading, setLoading] = useState(false);
+  const [highlightedMessageId, setHighlightedMessageId] = useState("");
   const fetchMessages = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/chat/messages/${id}`, {
@@ -38,6 +39,41 @@ export default function Chat() {
     socket.on("chat:message", handleIncoming);
     return () => socket.off("chat:message", handleIncoming);
   }, [id]);
+
+  useEffect(() => {
+    if (
+      !location.state?.highlightLatestMessage ||
+      !messages.length ||
+      !currentUser
+    ) {
+      return;
+    }
+
+    const targetMessage =
+      [...messages]
+        .reverse()
+        .find((message) => message.sender?._id !== currentUser) ||
+      messages[messages.length - 1];
+
+    if (!targetMessage?._id) return;
+
+    setHighlightedMessageId(targetMessage._id);
+
+    const scrollTimer = setTimeout(() => {
+      document
+        .getElementById(`message-${targetMessage._id}`)
+        ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 100);
+
+    const clearTimer = setTimeout(() => {
+      setHighlightedMessageId("");
+    }, 4000);
+
+    return () => {
+      clearTimeout(scrollTimer);
+      clearTimeout(clearTimer);
+    };
+  }, [location.state?.highlightLatestMessage, messages, currentUser]);
 
   const sendMessage = async () => {
     try {
@@ -104,8 +140,13 @@ export default function Chat() {
           return (
             <div
               key={msg._id}
+              id={`message-${msg._id}`}
               className={
-                msg.sender._id === currentUser ? "my-message" : "other-message"
+                `${msg.sender._id === currentUser ? "my-message" : "other-message"} ${
+                  highlightedMessageId === msg._id
+                    ? "message-notification-highlight"
+                    : ""
+                }`
               }
             >
               <p>{msg.text}</p>

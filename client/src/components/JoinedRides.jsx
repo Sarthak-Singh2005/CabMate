@@ -139,6 +139,7 @@ export default function JoinedRides() {
       key={ride._id}
       ride={ride}
       highlighted={highlightedRideId === ride._id}
+      showPhone
       actions={
         <button
           className="book-button"

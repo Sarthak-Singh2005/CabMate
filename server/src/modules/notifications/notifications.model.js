@@ -32,6 +32,11 @@ const notificationSchema = new mongoose.Schema(
       ref: "Ride",
     },
 
+    passenger: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
     conversation: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Conversation",

@@ -25,9 +25,6 @@ const createrideModel = new mongoose.Schema(
       type: Number,
       required: true,
     },
-    phoneno: {
-      type: String,
-    },
     date: {
       type: Date,
       required: true,
@@ -37,7 +34,7 @@ const createrideModel = new mongoose.Schema(
     },
     status:{
       type: String,
-      enum:["Available","Completed","Cancelled"],
+      enum:["Available","Completed","Cancelled","Full"],
       default: "Available",
     },
     vehiclename: {
@@ -48,6 +45,12 @@ const createrideModel = new mongoose.Schema(
     vacantseat: {
       type: Number,
       required: true,
+    },
+    maletravel: {
+      type: Number,
+    },
+    femaletravel: {
+      type: Number,
     },
     bookingRequests: [
       {

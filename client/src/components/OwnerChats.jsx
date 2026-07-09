@@ -10,10 +10,34 @@ export default function OwnerChats() {
   const location = useLocation();
   const [conversations, setConversations] = useState([]);
   const [ownerId, setOwnerId] = useState("");
-  const [pendingPassengers, setPendingPassengers] = useState([]);
+  const [bookingStatusMap, setBookingStatusMap] = useState({}); // userId -> "pending" | "accepted" | "rejected"
   const [bookingRequestUsers, setBookingRequestUsers] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingId, setLoadingId] = useState(null); // passengerId currently being accepted/rejected
   const [highlightedPassengerId, setHighlightedPassengerId] = useState("");
+
+  const handleBack = () => {
+    const rideSource = location.state?.rideSource;
+    const sourceRideId = rideSource?.highlightId || rideId;
+
+    if (rideSource?.pathname) {
+      navigate(
+        `${rideSource.pathname}${rideSource.search || ""}${rideSource.hash || ""}`,
+        {
+          state: {
+            highlightChatSourceId: rideSource.highlightId,
+            activeTab: rideSource.activeTab,
+          },
+        },
+      );
+      return;
+    }
+
+    navigate("/ownerride", {
+      state: {
+        highlightChatSourceId: sourceRideId,
+      },
+    });
+  };
 
   const fetchChats = async () => {
     try {
@@ -44,10 +68,12 @@ export default function OwnerChats() {
       );
       const data = await res.json();
       if (res.ok && Array.isArray(data.bookingRequests)) {
-        const pending = data.bookingRequests
-          .filter((r) => r.status === "pending")
-          .map((r) => r.user._id);
-        setPendingPassengers(pending.map((id) => id && id.toString()));
+        const statusMap = {};
+        data.bookingRequests.forEach((r) => {
+          const uid = (r.user?._id || r.user).toString();
+          statusMap[uid] = r.status;
+        });
+        setBookingStatusMap(statusMap);
 
         const users = data.bookingRequests.map((r) => {
           const user = r.user;
@@ -55,7 +81,8 @@ export default function OwnerChats() {
             return { _id: user, name: "Unknown User" };
           return {
             _id: user._id || user.id,
-            name: user.name || user.email || "Unknown User",
+            name: user.name || user.phone || "Unknown User",
+            gender: user.gender,
           };
         });
         setBookingRequestUsers(users);
@@ -67,7 +94,7 @@ export default function OwnerChats() {
 
   const acceptBooking = async (passengerId) => {
     try {
-      setLoading(true);
+      setLoadingId(passengerId);
       const res = await fetch(
         `${API_BASE_URL}/api/rides/bookingconfirm/accept`,
         {
@@ -79,19 +106,19 @@ export default function OwnerChats() {
       );
       const data = await res.json();
       if (res.ok) {
-        setPendingPassengers((prev) => prev.filter((id) => id !== passengerId));
+        setBookingStatusMap((prev) => ({ ...prev, [passengerId]: "accepted" }));
       } else {
         toast.error(data.message);
       }
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      setLoadingId(null);
     }
   };
   const rejectBooking = async (passengerId) => {
     try {
-      setLoading(true);
+      setLoadingId(passengerId);
       const res = await fetch(
         `${API_BASE_URL}/api/rides/bookingconfirm/reject`,
         {
@@ -103,7 +130,7 @@ export default function OwnerChats() {
       );
       const data = await res.json();
       if (res.ok) {
-        setPendingPassengers((prev) => prev.filter((id) => id !== passengerId));
+        setBookingStatusMap((prev) => ({ ...prev, [passengerId]: "rejected" }));
         toast.success(data.message);
       } else {
         toast.error(data.message);
@@ -111,7 +138,7 @@ export default function OwnerChats() {
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      setLoadingId(null);
     }
   };
   const openConversation = async (passenger) => {
@@ -125,6 +152,9 @@ export default function OwnerChats() {
               hash: location.hash,
               highlightId: passenger._id,
               highlightType: "owner-passenger",
+              returnState: {
+                rideSource: location.state?.rideSource,
+              },
             },
           },
         });
@@ -155,6 +185,9 @@ export default function OwnerChats() {
               hash: location.hash,
               highlightId: passenger._id,
               highlightType: "owner-passenger",
+              returnState: {
+                rideSource: location.state?.rideSource,
+              },
             },
           },
         });
@@ -202,10 +235,22 @@ export default function OwnerChats() {
 
   return (
     <div className="owner-chat-page">
-      <h1 className="OwnMessHead">People Who Contacted You</h1>
+      <div className="chat-top">
+        <button type="button" className="btnform" onClick={handleBack}>
+          Back
+        </button>
+        <h1 className="OwnMessHead chat-header">People Who Contacted You</h1>
+      </div>
       {message && <h2 className="OwnMessHead">{message}</h2>}
       {(() => {
         const passengerMap = new Map();
+
+        // Build a gender lookup from booking requests (conversation participants aren't populated with gender)
+        const genderMap = {};
+        bookingRequestUsers.forEach((u) => {
+          const id = (u._id || u).toString();
+          if (u.gender) genderMap[id] = u.gender;
+        });
 
         conversations.forEach((conversation) => {
           const passenger = conversation.participants.find(
@@ -216,6 +261,7 @@ export default function OwnerChats() {
             passengerMap.set(id, {
               _id: id,
               name: passenger.name,
+              gender: genderMap[id],
               conversationId: conversation._id,
             });
           }
@@ -224,12 +270,24 @@ export default function OwnerChats() {
         bookingRequestUsers.forEach((u) => {
           const id = (u._id || u).toString();
           if (!passengerMap.has(id)) {
-            passengerMap.set(id, { _id: id, name: u.name || "Unknown User" });
+            passengerMap.set(id, {
+              _id: id,
+              name: u.name || "Unknown User",
+              gender: u.gender,
+            });
+          } else {
+            const existing = passengerMap.get(id);
+            if (!existing.gender && u.gender) {
+              passengerMap.set(id, { ...existing, gender: u.gender });
+            }
           }
         });
 
         const combined = Array.from(passengerMap.values());
         return combined.map((passenger) => {
+          const status = bookingStatusMap[passenger._id.toString()];
+          const isLoading = loadingId === passenger._id;
+
           return (
             <div
               key={passenger._id}
@@ -246,6 +304,7 @@ export default function OwnerChats() {
 
               <div className="chat-info">
                 <h2>{passenger?.name}</h2>
+                <h2>({passenger?.gender || "N/A"})</h2>
                 <button
                   className="createbutton"
                   onClick={() => openConversation(passenger)}
@@ -254,21 +313,35 @@ export default function OwnerChats() {
                 </button>
               </div>
 
-              {pendingPassengers.includes(passenger._id.toString()) && (
+              {status === "pending" && (
                 <div className="acceptbtn">
                   <h2>{passenger?.name} requested to join in cab</h2>
                   <button
                     className="createbutton"
+                    disabled={isLoading}
                     onClick={() => acceptBooking(passenger._id)}
                   >
-                    {loading ? "Accepting...." : "Accept"}
+                    {isLoading ? "Loading...." : "Accept"}
                   </button>
                   <button
                     className="createbutton"
+                    disabled={isLoading}
                     onClick={() => rejectBooking(passenger._id)}
                   >
-                    {loading ? "Rejecting...." : "Reject"}
+                    {isLoading ? "Loading...." : "Reject"}
                   </button>
+                </div>
+              )}
+
+              {status === "accepted" && (
+                <div className="acceptbtn">
+                  <span className="status-pill accepted">✅ Accepted</span>
+                </div>
+              )}
+
+              {status === "rejected" && (
+                <div className="acceptbtn">
+                  <span className="status-pill rejected">❌ Rejected</span>
                 </div>
               )}
             </div>

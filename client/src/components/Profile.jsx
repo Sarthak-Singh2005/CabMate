@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 
 import { API_BASE_URL } from "../config/api";
@@ -16,7 +16,6 @@ export default function Profile() {
   const [editName, setEditName] = useState("");
   const [editMessage, setEditMessage] = useState("");
   const [editLoading, setEditLoading] = useState(false);
-
   const { profileId } = useParams();
   const navigate = useNavigate();
   useEffect(() => {
@@ -51,6 +50,7 @@ export default function Profile() {
   }, [profileId]);
   const handleLogout = async () => {
     try {
+      setLoading(true);
       const res = await fetch(`${API_BASE_URL}/api/auth/logout`, {
         method: "POST",
         credentials: "include",
@@ -68,6 +68,8 @@ export default function Profile() {
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -194,7 +196,10 @@ export default function Profile() {
         </div>
         <div className="profile-info">
           <h2 className="profile-info-text">Name: {detail.name}</h2>
-          <h2 className="profile-info-text">Email: {detail.email}</h2>
+          <h2 className="profile-info-text">Mobile Number: {detail.phone}</h2>
+          <h2 className="profile-info-text">
+            Gender: {detail.gender || "Not specified"}
+          </h2>
           <h2 className="profile-info-text">
             Member Since{" "}
             {new Date(detail.createdAt).toLocaleDateString("en-IN", {
@@ -210,8 +215,12 @@ export default function Profile() {
             <button className="createbutton" onClick={handleTogglePasswordForm}>
               {showPasswordForm ? "Cancel" : "Change Password"}
             </button>
-            <button className="createbutton" onClick={handleLogout}>
-              Logout
+            <button
+              className="createbutton"
+              disabled={loading}
+              onClick={handleLogout}
+            >
+              {loading ? "Logging out..." : "Logout"}
             </button>
           </div>
           {showPasswordForm && (

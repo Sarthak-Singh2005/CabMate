@@ -5,6 +5,10 @@ export default function ProtectedRoute({ children }) {
   const userId = useCurrentUser();
   const location = useLocation();
 
+  if (userId === undefined) {
+    return null;
+  }
+
   if (!userId) {
     return <Navigate to="/" replace state={{ from: location }} />;
   }
