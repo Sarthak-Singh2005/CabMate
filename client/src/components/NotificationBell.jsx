@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaBell } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
@@ -146,7 +146,7 @@ export default function NotificationBell({
             <div className="notification-list">
               {notifications.map((notification) => (
                 <div
-                  key={notification._id || Math.random()}
+                  key={notification._id}
                   onClick={() => handleNotificationClick(notification)}
                   style={{
                     cursor: "pointer",

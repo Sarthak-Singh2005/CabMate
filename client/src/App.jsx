@@ -14,21 +14,23 @@ import Createride from "./components/Createride";
 import Chat from "./components/Chat";
 import OwnerChats from "./components/OwnerChats";
 import ProtectedRoute from "./components/ProtectedRoute";
-import NotificationBell from "./components/NotificationBell";
 import { Toaster } from "react-hot-toast";
 import { useCurrentUser } from "./hooks/useCurrentUser";
 import { useNotifications } from "./hooks/useNotifications";
 import { HiOutlineUserCircle } from "react-icons/hi2";
+import NotificationBell from "./components/NotificationBell";
 import Profile from "./components/Profile";
 import JoinedRides from "./components/JoinedRides";
 import Owneravail from "./components/Owneravail";
 import NotFound from "./components/NotFound";
 import { MdOutlineDirectionsCar } from "react-icons/md";
+import { HiOutlineBars3, HiOutlineXMark } from "react-icons/hi2";
 export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const userId = useCurrentUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notificationBellOpen, setNotificationBellOpen] = useState(false);
   const {
     notifications,
     unreadCount,
@@ -103,15 +105,18 @@ export default function App() {
             </NavLink>
           </nav>
 
-          <div className="header-actions">
-            <button
-              className="mobile-nav-toggle"
-              type="button"
-              onClick={() => setMobileMenuOpen((open) => !open)}
-              aria-label="Toggle navigation"
-            >
-              {mobileMenuOpen ? "✕" : "☰"}
-            </button>
+          <button
+  className="mobile-nav-toggle"
+  type="button"
+  onClick={() => setMobileMenuOpen((open) => !open)}
+  aria-label="Toggle navigation"
+>
+  {mobileMenuOpen ? (
+    <HiOutlineXMark size={30} />
+  ) : (
+    <HiOutlineBars3 size={30} />
+  )}
+</button>
 
             <NotificationBell
               notifications={notifications}
@@ -130,7 +135,6 @@ export default function App() {
                 <HiOutlineUserCircle size={24} />
               </button>
             )}
-          </div>
         </header>
       )}
 
