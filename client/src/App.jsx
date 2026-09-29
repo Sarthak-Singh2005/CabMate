@@ -30,7 +30,6 @@ export default function App() {
   const navigate = useNavigate();
   const userId = useCurrentUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [notificationBellOpen, setNotificationBellOpen] = useState(false);
   const {
     notifications,
     unreadCount,

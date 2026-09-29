@@ -2,10 +2,23 @@ const Notification = require("./notifications.model");
 
 async function getNotifications(req, res) {
   try {
-    const notifications = await Notification.find({ user: req.user.id })
-      .sort({ createdAt: -1 })
-      .lean();
-    return res.status(200).json({ notifications });
+    const query = { user: req.user.id };
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit, 10) || 20));
+    const [notifications, total, unreadCount] = await Promise.all([
+      Notification.find(query)
+        .sort({ createdAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      Notification.countDocuments(query),
+      Notification.countDocuments({ ...query, isRead: false }),
+    ]);
+    return res.status(200).json({
+      notifications,
+      unreadCount,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Unable to load notifications" });

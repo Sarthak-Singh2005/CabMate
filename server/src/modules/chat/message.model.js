@@ -16,13 +16,39 @@ const messageSchema = new mongoose.Schema(
 
     text: {
       type: String,
-      required: true,
+      default: "",
       trim: true,
+    },
+
+    attachments: [
+      {
+        url: {
+          type: String,
+          required: true,
+        },
+        fileName: {
+          type: String,
+          required: true,
+        },
+        mimeType: {
+          type: String,
+          required: true,
+        },
+        size: {
+          type: Number,
+          default: 0,
+        },
+      },
+    ],
+
+    edited: {
+      type: Boolean,
+      default: false,
     },
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 messageSchema.index({

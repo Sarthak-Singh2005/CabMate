@@ -9,14 +9,13 @@ export function useCurrentUser() {
 
   useEffect(() => {
     let isMounted = true;
-
     const setCurrentUserId = (nextUserId) => {
       if (nextUserId) {
         localStorage.setItem("userId", nextUserId);
       } else {
         localStorage.removeItem("userId");
-      }
 
+      }
       if (isMounted) {
         setUserId(nextUserId || null);
       }

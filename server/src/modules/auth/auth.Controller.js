@@ -9,6 +9,7 @@ function getAuthCookieOptions() {
     httpOnly: true,
     secure: isProduction,
     sameSite: isProduction ? "none" : "lax",
+    maxAge: 24 * 60 * 60 * 1000,
   };
 }
 
@@ -24,7 +25,8 @@ async function loginUserController(req, res) {
       return res.status(400).json({
         message: "Please provide password",
       });
-    } else if (!/^[0-9]{10}$/.test(cleanedPhone)) {
+    }
+    if (!/^[6-9]\d{9}$/.test(cleanedPhone)) {
       return res.status(400).json({
         message: "Please provide a valid 10 digit phone number",
       });
@@ -47,7 +49,11 @@ async function loginUserController(req, res) {
       });
     }
     const token = jwt.sign(
-      { id: user._id, name: user.name },
+      {
+        id: user._id,
+        name: user.name,
+        tokenVersion: user.tokenVersion ?? 0,
+      },
       process.env.JWT_SECRET,
       {
         expiresIn: "1d",
@@ -92,7 +98,7 @@ async function registerUserController(req, res) {
       return res.status(400).json({
         message: "Please select a valid gender",
       });
-    } else if (!/^[0-9]{10}$/.test(cleanedPhone)) {
+    } else if (!/^[6-9]\d{9}$/.test(cleanedPhone)) {
       return res.status(400).json({
         message: "Please provide a valid 10 digit phone number",
       });
@@ -113,7 +119,11 @@ async function registerUserController(req, res) {
       gender,
     });
     const token = jwt.sign(
-      { id: user._id, name: user.name },
+      {
+        id: user._id,
+        name: user.name,
+        tokenVersion: user.tokenVersion ?? 0,
+      },
       process.env.JWT_SECRET,
       {
         expiresIn: "1d",
@@ -138,6 +148,10 @@ async function registerUserController(req, res) {
 
 async function logoutUserController(req, res) {
   try {
+    await userModel.updateOne(
+      { _id: req.user.id },
+      { $inc: { tokenVersion: 1 } },
+    );
     res.clearCookie("token", getAuthCookieOptions());
 
     return res.status(200).json({
@@ -176,33 +190,30 @@ async function changePasswordController(req, res) {
       return res.status(400).json({ message: "Current password is incorrect" });
     }
 
-    user.password = await bcrypt.hash(newPassword, 10);
-    await user.save();
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const updatedUser = await userModel.findByIdAndUpdate(
+      user._id,
+      {
+        $set: { password: hashedPassword },
+        $inc: { tokenVersion: 1 },
+      },
+      { new: true },
+    );
+
+    const token = jwt.sign(
+      {
+        id: updatedUser._id,
+        name: updatedUser.name,
+        tokenVersion: updatedUser.tokenVersion,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+    res.cookie("token", token, getAuthCookieOptions());
 
     return res.status(200).json({ message: "Password updated successfully" });
   } catch (err) {
     return res.status(500).json({ message: "Server error" });
-  }
-}
-
-async function forgotPasswordController(req, res) {
-  try {
-    const { phone } = req.body;
-    const cleanedPhone = phone?.trim();
-    if (!cleanedPhone) {
-      return res.status(400).json({ message: "Please provide phone number" });
-    }
-    const user = await userModel.findOne({ phone: cleanedPhone });
-    if (!user) {
-      return res.status(404).json({ message: "Phone number not registered" });
-    }
-
-    return res.status(200).json({
-      message:
-        "If this phone number is registered, password reset can continue.",
-    });
-  } catch (err) {
-    return res.status(500).json({ message: "Server Error" });
   }
 }
 
@@ -232,6 +243,5 @@ module.exports = {
   registerUserController,
   logoutUserController,
   changePasswordController,
-  forgotPasswordController,
   getCurrentUserController,
 };

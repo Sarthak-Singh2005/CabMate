@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import "../index.css";
 import RideCard from "./RideCard";
 import { API_BASE_URL } from "../config/api";
+import toast from "react-hot-toast";
 
 export default function JoinedRides() {
   const [joinedRides, setJoinedRides] = useState([]);
@@ -75,6 +76,34 @@ export default function JoinedRides() {
     }
   };
 
+  const handleOpenRideGroup = async (rideId) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/chat/group/${rideId}`, {
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return toast.error(data.message || "Unable to open ride group");
+      }
+      navigate(`/chat/${data.conversation._id}`, {
+        state: {
+          chatSource: {
+            pathname: location.pathname,
+            search: location.search,
+            hash: location.hash,
+            highlightId: rideId,
+            highlightType: "ride",
+            activeTab,
+            isRideGroup: true,
+          },
+        },
+      });
+    } catch (err) {
+      console.error(err);
+      toast.error("Unable to open ride group");
+    }
+  };
+
   const now = new Date();
   const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
@@ -107,7 +136,11 @@ export default function JoinedRides() {
 
   useEffect(() => {
     if (location.state?.activeTab) {
-      setActiveTab(location.state.activeTab);
+      const tabTimer = setTimeout(() => {
+        setActiveTab(location.state.activeTab);
+      }, 0);
+
+      return () => clearTimeout(tabTimer);
     }
   }, [location.state?.activeTab]);
 
@@ -116,9 +149,8 @@ export default function JoinedRides() {
 
     if (!highlightId) return;
 
-    setHighlightedRideId(highlightId);
-
     const scrollTimer = setTimeout(() => {
+      setHighlightedRideId(highlightId);
       document
         .getElementById(`chat-source-${highlightId}`)
         ?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -141,12 +173,20 @@ export default function JoinedRides() {
       highlighted={highlightedRideId === ride._id}
       showPhone
       actions={
-        <button
-          className="book-button"
-          onClick={() => handleChatWithOwner(ride._id)}
-        >
-          Chat
-        </button>
+        <>
+          <button
+            className="book-button"
+            onClick={() => handleChatWithOwner(ride._id)}
+          >
+            Message Owner
+          </button>
+          <button
+            className="book-button"
+            onClick={() => handleOpenRideGroup(ride._id)}
+          >
+            Ride Group
+          </button>
+        </>
       }
     />
   );

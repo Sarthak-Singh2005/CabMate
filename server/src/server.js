@@ -5,7 +5,6 @@ const http = require("http");
 const { Server } = require("socket.io");
 const { setIo } = require("./socket");
 const jwt = require("jsonwebtoken");
-connectDb();
 const PORT = process.env.PORT || 5000;
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -56,6 +55,15 @@ io.on("connection", (socket) => {
   });
 });
 setIo(io);
-server.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+
+connectDb()
+  .then(
+    () =>
+      server.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+      }),
+  )
+  .catch((err) => {
+    console.error("Server startup failed:", err.message);
+    process.exitCode = 1;
+  });

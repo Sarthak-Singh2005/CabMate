@@ -1,24 +1,19 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import "../index.css";
 import Searchride from "./Searchride";
 import Ridesavail from "./Ridesavail";
 import { useLocation } from "react-router-dom";
 import { API_BASE_URL } from "../config/api";
 export default function Rides() {
+  const location = useLocation();
   const [to, setTo] = useState("");
   const [from, setFrom] = useState("");
   const [date, setDate] = useState("");
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState(
+    () => location.state?.restoredSearchResults || [],
+  );
   const [popup, setPopup] = useState("");
   const [loading, setLoading] = useState(false);
-
-  const location = useLocation();
-
-  useEffect(() => {
-    if (Array.isArray(location.state?.restoredSearchResults)) {
-      setResults(location.state.restoredSearchResults);
-    }
-  }, [location.state?.restoredSearchResults]);
 
   const search = async (e) => {
     e.preventDefault();

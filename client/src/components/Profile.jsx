@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 
 import { API_BASE_URL } from "../config/api";
 import toast from "react-hot-toast";
+import { HiOutlineEye, HiOutlineEyeSlash } from "react-icons/hi2";
 export default function Profile() {
   const [detail, setDetail] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -12,6 +13,9 @@ export default function Profile() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMessage, setPasswordMessage] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [editName, setEditName] = useState("");
   const [editMessage, setEditMessage] = useState("");
@@ -83,6 +87,9 @@ export default function Profile() {
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
+    setShowCurrentPassword(false);
+    setShowNewPassword(false);
+    setShowConfirmPassword(false);
   };
 
   const handlePasswordSubmit = async (e) => {
@@ -229,32 +236,79 @@ export default function Profile() {
                 <label className="changePasswordHeading">
                   Current Password
                 </label>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  required
-                />
+                <div className="password-field-wrapper">
+                  <input
+                    type={showCurrentPassword ? "text" : "password"}
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={() => setShowCurrentPassword((prev) => !prev)}
+                    aria-label={
+                      showCurrentPassword ? "Hide password" : "Show password"
+                    }
+                    tabIndex={-1}
+                  >
+                    {showCurrentPassword ? (
+                      <HiOutlineEyeSlash />
+                    ) : (
+                      <HiOutlineEye />
+                    )}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="changePasswordHeading">New Password</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                />
+                <div className="password-field-wrapper">
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={() => setShowNewPassword((prev) => !prev)}
+                    aria-label={
+                      showNewPassword ? "Hide password" : "Show password"
+                    }
+                    tabIndex={-1}
+                  >
+                    {showNewPassword ? <HiOutlineEyeSlash /> : <HiOutlineEye />}
+                  </button>
+                </div>
               </div>
               <div>
                 <label className="changePasswordHeading">
                   Confirm New Password
                 </label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                />
+                <div className="password-field-wrapper">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="password-toggle-btn"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    aria-label={
+                      showConfirmPassword ? "Hide password" : "Show password"
+                    }
+                    tabIndex={-1}
+                  >
+                    {showConfirmPassword ? (
+                      <HiOutlineEyeSlash />
+                    ) : (
+                      <HiOutlineEye />
+                    )}
+                  </button>
+                </div>
               </div>
               <button
                 className="createbutton"

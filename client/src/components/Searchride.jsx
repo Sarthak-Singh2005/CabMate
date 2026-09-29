@@ -56,9 +56,8 @@ export default function Searchride({ searcharr }) {
 
     if (!highlightId) return;
 
-    setHighlightedRideId(highlightId);
-
     const scrollTimer = setTimeout(() => {
+      setHighlightedRideId(highlightId);
       document
         .getElementById(`chat-source-${highlightId}`)
         ?.scrollIntoView({ behavior: "smooth", block: "center" });

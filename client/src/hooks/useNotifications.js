@@ -19,8 +19,9 @@ export function useNotifications(userId) {
           setNotifications(data.notifications);
 
           setUnreadCount(
-            data.notifications.filter((notification) => !notification.isRead)
-              .length,
+            data.unreadCount ??
+              data.notifications.filter((notification) => !notification.isRead)
+                .length,
           );
         } else if (res.status === 401) {
           localStorage.removeItem("userId");
@@ -35,11 +36,12 @@ export function useNotifications(userId) {
     if (!userId) {
       socket.disconnect();
 
-      setNotifications([]);
+      const resetTimer = setTimeout(() => {
+        setNotifications([]);
+        setUnreadCount(0);
+      }, 0);
 
-      setUnreadCount(0);
-
-      return;
+      return () => clearTimeout(resetTimer);
     }
 
     socket.disconnect();

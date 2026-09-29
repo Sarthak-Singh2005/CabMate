@@ -84,14 +84,6 @@ export default function Owneravail() {
 
   const cancelledRides = ownride.filter((ride) => ride.status === "Cancelled");
 
-  const getRideTab = (ride) => {
-    if (!ride) return "";
-    if (ride.status === "Cancelled") return "cancelled";
-
-    const rideDay = getRideDateOnly(ride);
-    return rideDay < todayStart ? "previous" : "upcoming";
-  };
-
   const getRideSource = (rideId) => ({
     pathname: location.pathname,
     search: location.search,
@@ -144,12 +136,20 @@ export default function Owneravail() {
   );
 
   useEffect(() => {
-    fetchOwnerRides();
+    const fetchTimer = setTimeout(() => {
+      fetchOwnerRides();
+    }, 0);
+
+    return () => clearTimeout(fetchTimer);
   }, []);
 
   useEffect(() => {
     if (location.state?.activeTab) {
-      setActiveTab(location.state.activeTab);
+      const tabTimer = setTimeout(() => {
+        setActiveTab(location.state.activeTab);
+      }, 0);
+
+      return () => clearTimeout(tabTimer);
     }
   }, [location.state?.activeTab]);
 
@@ -161,16 +161,35 @@ export default function Owneravail() {
     const highlightedRide = ownride.find(
       (ride) => ride._id?.toString() === highlightId.toString(),
     );
-    const targetTab = location.state?.activeTab || getRideTab(highlightedRide);
+    const targetTab = location.state?.activeTab || (() => {
+      if (!highlightedRide) return "";
+      if (highlightedRide.status === "Cancelled") return "cancelled";
+
+      const effectNow = new Date();
+      const effectTodayStart = new Date(
+        effectNow.getFullYear(),
+        effectNow.getMonth(),
+        effectNow.getDate(),
+      );
+      const rideDate = new Date(highlightedRide.date);
+      const rideDay = new Date(
+        rideDate.getFullYear(),
+        rideDate.getMonth(),
+        rideDate.getDate(),
+      );
+      return rideDay < effectTodayStart ? "previous" : "upcoming";
+    })();
 
     if (targetTab && activeTab !== targetTab) {
-      setActiveTab(targetTab);
-      return;
+      const tabTimer = setTimeout(() => {
+        setActiveTab(targetTab);
+      }, 0);
+
+      return () => clearTimeout(tabTimer);
     }
 
-    setHighlightedRideId(highlightId);
-
     const scrollTimer = setTimeout(() => {
+      setHighlightedRideId(highlightId);
       document
         .getElementById(`chat-source-${highlightId}`)
         ?.scrollIntoView({ behavior: "smooth", block: "center" });

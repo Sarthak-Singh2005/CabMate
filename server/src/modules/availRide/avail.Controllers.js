@@ -16,8 +16,8 @@ async function availRide(req, res) {
       })
       .select("-phoneno")
       .populate("createdBy", "name gender")
-      .populate("bookingRequests.user", "gender")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .limit(50);
 
     if (availrides.length > 0) {
       return res.status(200).json(availrides);
@@ -39,7 +39,8 @@ async function ownerRide(req, res) {
       .select("-phoneno")
       .populate("createdBy", "name gender")
       .populate("bookingRequests.user", "gender")
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .limit(50);
 
     if (ownerrides.length > 0) {
       return res.status(200).json(ownerrides);

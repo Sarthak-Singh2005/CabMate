@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 import { API_BASE_URL } from "../config/api";
@@ -14,6 +14,11 @@ export default function OwnerChats() {
   const [bookingRequestUsers, setBookingRequestUsers] = useState([]);
   const [loadingId, setLoadingId] = useState(null); // passengerId currently being accepted/rejected
   const [highlightedPassengerId, setHighlightedPassengerId] = useState("");
+  const [rideGroup, setRideGroup] = useState(null);
+  const [groupLoading, setGroupLoading] = useState(false);
+  const [showGroupCreator, setShowGroupCreator] = useState(false);
+  const [groupName, setGroupName] = useState("");
+  const [selectedGroupMembers, setSelectedGroupMembers] = useState([]);
 
   const handleBack = () => {
     const rideSource = location.state?.rideSource;
@@ -39,7 +44,7 @@ export default function OwnerChats() {
     });
   };
 
-  const fetchChats = async () => {
+  const fetchChats = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/chat/ride/${rideId}`, {
         method: "GET",
@@ -58,9 +63,78 @@ export default function OwnerChats() {
     } catch (err) {
       console.error(err);
     }
+  }, [rideId]);
+
+  const fetchRideGroup = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/chat/group/${rideId}`, {
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (res.ok) setRideGroup(data.conversation);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [rideId]);
+
+  const openGroupChat = (conversation) => {
+    navigate(`/chat/${conversation._id}`, {
+      state: {
+        chatSource: {
+          pathname: location.pathname,
+          search: location.search,
+          hash: location.hash,
+          isRideGroup: true,
+          returnState: { rideSource: location.state?.rideSource },
+        },
+      },
+    });
   };
 
-  const fetchBookingRequests = async () => {
+  const openGroupCreator = () => {
+    const acceptedPassengerIds = bookingRequestUsers
+      .filter((user) => bookingStatusMap[user._id] === "accepted")
+      .map((user) => user._id);
+    if (!acceptedPassengerIds.length) {
+      return toast.error("Accept at least one passenger before creating a group");
+    }
+    setSelectedGroupMembers(acceptedPassengerIds);
+    setGroupName("");
+    setShowGroupCreator(true);
+  };
+
+  const toggleGroupMember = (passengerId) => {
+    setSelectedGroupMembers((members) =>
+      members.includes(passengerId)
+        ? members.filter((id) => id !== passengerId)
+        : [...members, passengerId],
+    );
+  };
+
+  const createRideGroup = async () => {
+    try {
+      setGroupLoading(true);
+      const res = await fetch(`${API_BASE_URL}/api/chat/group/${rideId}`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ groupName, passengerIds: selectedGroupMembers }),
+      });
+      const data = await res.json();
+      if (!res.ok) return toast.error(data.message || "Unable to create group");
+      setRideGroup(data.conversation);
+      setShowGroupCreator(false);
+      toast.success("Ride group is ready");
+      openGroupChat(data.conversation);
+    } catch (err) {
+      console.error(err);
+      toast.error("Unable to create group");
+    } finally {
+      setGroupLoading(false);
+    }
+  };
+
+  const fetchBookingRequests = useCallback(async () => {
     try {
       const res = await fetch(
         `${API_BASE_URL}/api/rides/bookingrequests/${rideId}`,
@@ -90,7 +164,7 @@ export default function OwnerChats() {
     } catch (err) {
       console.error(err);
     }
-  };
+  }, [rideId]);
 
   const acceptBooking = async (passengerId) => {
     try {
@@ -171,6 +245,7 @@ export default function OwnerChats() {
 
         body: JSON.stringify({
           rideId,
+          passengerId: passenger._id,
         }),
       });
 
@@ -200,20 +275,31 @@ export default function OwnerChats() {
   };
 
   useEffect(() => {
-    fetchChats();
-  }, [rideId]);
+    const fetchTimer = setTimeout(() => {
+      fetchChats();
+    }, 0);
+
+    return () => clearTimeout(fetchTimer);
+  }, [fetchChats]);
   useEffect(() => {
-    fetchBookingRequests();
-  }, [rideId]);
+    const fetchTimer = setTimeout(() => {
+      fetchBookingRequests();
+    }, 0);
+
+    return () => clearTimeout(fetchTimer);
+  }, [fetchBookingRequests]);
+  useEffect(() => {
+    const fetchTimer = setTimeout(fetchRideGroup, 0);
+    return () => clearTimeout(fetchTimer);
+  }, [fetchRideGroup]);
 
   useEffect(() => {
     const highlightId = location.state?.highlightChatSourceId;
 
     if (!highlightId) return;
 
-    setHighlightedPassengerId(highlightId);
-
     const scrollTimer = setTimeout(() => {
+      setHighlightedPassengerId(highlightId);
       document
         .getElementById(`chat-source-${highlightId}`)
         ?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -241,6 +327,73 @@ export default function OwnerChats() {
         </button>
         <h1 className="OwnMessHead chat-header">People Who Contacted You</h1>
       </div>
+      <div className="ride-group-actions">
+        <button
+          className="createbutton"
+          disabled={groupLoading}
+          onClick={() =>
+            rideGroup ? openGroupChat(rideGroup) : openGroupCreator()
+          }
+        >
+          {groupLoading
+            ? "Creating group..."
+            : rideGroup
+              ? "Open Ride Group"
+              : "Create Ride Group"}
+        </button>
+        {!rideGroup && (
+          <p>Choose accepted passengers and give the group a name.</p>
+        )}
+      </div>
+      {showGroupCreator && (
+        <div className="popup" onClick={() => setShowGroupCreator(false)}>
+          <div
+            className="popup-container group-creator"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h2>Create ride group</h2>
+            <p>Choose who should be in this group.</p>
+            <label htmlFor="group-name">Group name</label>
+            <input
+              id="group-name"
+              value={groupName}
+              maxLength={80}
+              placeholder="e.g. Airport ride group"
+              onChange={(event) => setGroupName(event.target.value)}
+              autoFocus
+            />
+            <div className="group-member-list">
+              {bookingRequestUsers
+                .filter((user) => bookingStatusMap[user._id] === "accepted")
+                .map((user) => (
+                  <label className="group-member-option" key={user._id}>
+                    <input
+                      type="checkbox"
+                      checked={selectedGroupMembers.includes(user._id)}
+                      onChange={() => toggleGroupMember(user._id)}
+                    />
+                    <span>{user.name}</span>
+                  </label>
+                ))}
+            </div>
+            <div className="popup-buttons">
+              <button
+                className="popup-btn cancel-btn"
+                onClick={() => setShowGroupCreator(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="popup-btn confirm-btn"
+                disabled={groupLoading}
+                onClick={createRideGroup}
+              >
+                {groupLoading ? "Creating..." : "Create group"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {message && <h2 className="OwnMessHead">{message}</h2>}
       {(() => {
         const passengerMap = new Map();

@@ -9,7 +9,10 @@ async function getDetail(req, res) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const person = await userModel.findById(personId).select("-password");
+    const isSelf = personId.toString() === req.user.id.toString();
+    const person = await userModel
+      .findById(personId)
+      .select(isSelf ? "name phone gender createdAt" : "name gender createdAt");
 
     if (!person) {
       return res.status(404).json({ message: "User not found" });
@@ -88,15 +91,26 @@ async function getJoinedRides(req, res) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const joinedRides = await createrideModel
-      .find({
-        "bookingRequests.user": userId,
-        "bookingRequests.status": "accepted",
-      })
+    const query = {
+      bookingRequests: { $elemMatch: { user: userId, status: "accepted" } },
+    };
+    const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
+    const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit, 10) || 20));
+    const [joinedRides, total] = await Promise.all([
+      createrideModel
+        .find(query)
+        .sort({ date: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
       .populate("createdBy", "name phone gender")
-      .populate("bookingRequests.user", "gender");
+        .populate("bookingRequests.user", "gender"),
+      createrideModel.countDocuments(query),
+    ]);
 
-    return res.status(200).json({ rides: joinedRides });
+    return res.status(200).json({
+      rides: joinedRides,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+    });
   } catch (error) {
     console.error("[getJoinedRides]", error);
     return res.status(500).json({ message: "Server error" });

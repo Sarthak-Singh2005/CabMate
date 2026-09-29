@@ -38,7 +38,11 @@ export default function Ridesavail() {
   };
 
   useEffect(() => {
-    fetchAvailableRides();
+    const fetchTimer = setTimeout(() => {
+      fetchAvailableRides();
+    }, 0);
+
+    return () => clearTimeout(fetchTimer);
   }, []);
 
   useEffect(() => {
@@ -46,9 +50,8 @@ export default function Ridesavail() {
 
     if (!highlightId) return;
 
-    setHighlightedRideId(highlightId);
-
     const scrollTimer = setTimeout(() => {
+      setHighlightedRideId(highlightId);
       document
         .getElementById(`chat-source-${highlightId}`)
         ?.scrollIntoView({ behavior: "smooth", block: "center" });

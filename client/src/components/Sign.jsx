@@ -2,12 +2,14 @@ import { useState } from "react";
 import { API_BASE_URL } from "../config/api";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { HiOutlineEye, HiOutlineEyeSlash } from "react-icons/hi2";
 export default function Sign({ setIslogin }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [gender, setGender] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -94,14 +96,26 @@ export default function Sign({ setIslogin }) {
           <label htmlFor="password" className="teco1">
             Password <span className="required-star" aria-hidden="true">*</span>
           </label>
-          <input
-            className="teco1input"
-            onChange={(e) => setPassword(e.target.value)}
-            type="password"
-            id="password"
-            required
-            placeholder="Enter Your Password"
-          />
+          <div className="password-field-wrapper">
+            <input
+              className="teco1input"
+              onChange={(e) => setPassword(e.target.value)}
+              type={showPassword ? "text" : "password"}
+              id="password"
+              required
+              placeholder="Enter Your Password"
+              value={password}
+            />
+            <button
+              type="button"
+              className="password-toggle-btn"
+              onClick={() => setShowPassword((prev) => !prev)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              tabIndex={-1}
+            >
+              {showPassword ? <HiOutlineEyeSlash /> : <HiOutlineEye />}
+            </button>
+          </div>
         </div>
         <button className="btnform" disabled={loading} type="submit">
           {loading ? "Creating..." : "Create Account"}
